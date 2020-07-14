@@ -1,0 +1,11 @@
+#!/bin/sh
+#
+ADDR=192.168.1.37
+DIR=/home/wlan/projekty/tk02
+#
+scp pi@$ADDR:py/tk/ap01.py $DIR/tk01.py
+scp pi@$ADDR:py/tk/helper.py $DIR/helper.py
+scp pi@$ADDR:py/tk/upload $DIR/upload
+scp pi@$ADDR:py/tk/download $DIR/download
+scp pi@$ADDR:py/tk/Vkeypad.py $DIR/Vkeypad.py
+scp pi@$ADDR:py/ap01.geany $DIR/../tk02.geany

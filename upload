@@ -1,0 +1,16 @@
+#!/bin/sh
+#
+# rpi423 320x240
+#ADDR=192.168.1.37
+#
+# rpi424 480x320
+ADDR=192.168.1.39
+#
+DIR=/home/wlan/projekty/tk02
+#
+scp $DIR/tk01.py pi@$ADDR:py/tk/ap01.py
+scp $DIR/helper.py pi@$ADDR:py/tk/helper.py
+scp $DIR/upload pi@$ADDR:py/tk/upload
+scp $DIR/download pi@$ADDR:py/tk/download
+scp $DIR/Vkeypad.py pi@$ADDR:py/tk/Vkeypad.py
+scp $DIR/../tk02.geany pi@$ADDR:py/ap01.geany
