@@ -1,0 +1,5 @@
+#!/bin/bash
+#
+cd /home/pi/py/tk
+export DISPLAY=:0
+python3 ap01.py
