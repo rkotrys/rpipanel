@@ -6,7 +6,7 @@
 # rpi424 480x320
 ADDR=192.168.1.39
 #
-DIR=/home/wlan/projekty/tk02
+DIR=/home/wlan/projekty/rpipanel
 #
 scp $DIR/tk01.py pi@$ADDR:py/tk/ap01.py
 scp $DIR/helper.py pi@$ADDR:py/tk/helper.py

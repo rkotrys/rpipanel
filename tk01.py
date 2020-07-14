@@ -16,7 +16,7 @@ import threading
 #scrmode=0 # 320x240
 scrmode=1 # 480x320
 scrtype=["320x240-0-0","480x320+0+0"]
-dfont=[11,12]
+dfont=[8,12]
 
 class Topbar:
     """ simple top bar with buttons  """
@@ -82,7 +82,7 @@ class Switchwindow:
         self.bpadx=2
         self.bpady=2
         self.monofont="DejaVu Sans Mono"
-        self.frame = tk.Frame(master,relief=tk.FLAT, bg=self.fbg, width=self.width, height=self.height-24 )
+        self.frame = tk.Frame(master,relief=tk.FLAT, bg=self.fbg, width=self.width, height=self.height-24, borderwidth=0 )
         self.frame.pack_propagate(0) # don't shrink
         #self.frame.pack(fill=tk.X, anchor=tk.CENTER)
         self.frame.place(relx=0.5, rely=0.5, anchor=tk.CENTER)
@@ -149,23 +149,38 @@ class Clock(Switchwindow):
     backs = []
 
     def __init__(self,master,name):
+        global scrmode
         Switchwindow.__init__(self,master,name)
         self.fbg="black"
         self.bfg="#ff8000"
 
-        self.ind=3
+        if scrmode==0:
+            self.ind=0
+        else:
+            self.ind=3
         self.s_color = (255,0,0,255)
         self.m_color = (255,190,0,255)
         self.h_color = (255,190,0,255)
         self.outline_color = (255,170,0,255)
         self.arrowsize = 15
+        self.symbol_M = 12
+        self.symbol_L = 16
+        self.symbol_XL = 24
+        self.ttf_XL = 24
+        self.ttf_L = 16
+        self.ttf_M = 12
+        self.ttf_S = 10
+        self.ttf_XS = 8
+
         if scrmode==0:
             Clock.baksnames = Clock.baksnames320
         for n in range(0,len(Clock.baksnames)):
             Clock.backs.append( Image.open( Clock.images + Clock.baksnames[n] ) )
-        self.font = ImageFont.truetype("./fonts/tahomabd.ttf", 16)
-        self.font12 = ImageFont.truetype("./fonts/lucon.ttf", 12)
-        self.symbols = ImageFont.truetype("./fonts/segmdl2.ttf", 16)
+        self.fontXL = ImageFont.truetype("./fonts/tahomabd.ttf", self.ttf_XL)
+        self.fontL = ImageFont.truetype("./fonts/tahomabd.ttf", self.ttf_L)
+        self.fontM = ImageFont.truetype("./fonts/lucon.ttf", self.ttf_M)
+        self.symbolsL = ImageFont.truetype("./fonts/segmdl2.ttf", self.symbol_L)
+        self.symbolsXL = ImageFont.truetype("./fonts/segmdl2.ttf", self.symbol_XL)
 
         self.time=tk.StringVar()
         self.frame.config(bg=self.fbg)
@@ -176,11 +191,19 @@ class Clock(Switchwindow):
         #self.lbl=tk.Label(self.time_frame,textvariable=self.time,justify=tk.CENTER,anchor=tk.CENTER,font=(self.monofont,45),bg=self.fbg, fg=self.bfg,pady=3 )
         self.lbl=tk.Label(self.time_frame,image=self.photo,justify=tk.CENTER,anchor=tk.CENTER,font=(self.monofont,45),bg=self.fbg, fg=self.bfg,pady=3 )
         self.lbl.pack()
-        self.btn=tk.Button(self.frame,text=' > ', command=self.nextface ,bg="gold", font=("DejaVu Sans Mono", 14),fg=self.fbg,borderwidth=0,relief=tk.FLAT,padx=0,pady=0)
-        self.btn.place(relx=0.9, rely=0.9, anchor=tk.CENTER)
+        self.btn_img = Image.open( Clock.images + "btn_gold_50.png" )
+        self.btn_photo = ImageTk.PhotoImage( self.btn_img )
+        self.canvas=tk.Canvas(self.frame,width=self.btn_img.size[0],height=self.btn_img.size[1],bg="black",bd=0, highlightthickness=0)
+        self.btn_next = self.canvas.create_image((26,26),image=self.btn_photo )
+        self.canvas.bind("<Button-1>",self.nextface)
+        self.canvas.place(relx=0.9, rely=0.9, anchor=tk.CENTER)
+        #self.btn=tk.Button(self.frame,text=' > ', command=self.nextface ,bg="gold", font=("DejaVu Sans Mono", 14),fg=self.fbg,borderwidth=0,relief=tk.FLAT,padx=0,pady=0)
+        #self.btn.place(relx=0.9, rely=0.9, anchor=tk.CENTER)
+        #self.btn=tk.Button(self.frame, image=self.btm_photo, command=self.nextface ,bg="black", font=("DejaVu Sans Mono", 14),fg=self.fbg,borderwidth=0,relief=tk.FLAT,padx=0,pady=0)
+        #self.btn.place(relx=0.9, rely=0.9, anchor=tk.CENTER)
         self.settime()
 
-    def nextface(self):
+    def nextface(self,event):
         if self.ind < len(Clock.baksnames)-1:
             self.ind=self.ind+1;
         else:
@@ -200,7 +223,18 @@ class Clock(Switchwindow):
         else:
             hands=(24,50,70)
             self.arrowsize=15
-        draw.text( (im.size[0]/2-8,im.size[0]/4), chr(0xE774)+u'', font=self.symbols, fill=iconcolor )
+        if scrmode==0:
+            font=self.fontL
+            symbols=self.symbolsL
+            symbol_size=self.symbol_L
+        else:
+            font=self.fontXL
+            symbols=self.symbolsXL
+            symbol_size=self.symbol_XL
+        draw.text( (im.size[0]/2-symbol_size/2,im.size[1]/4), chr(0xE774)+u'', font=symbols, fill=iconcolor )
+        temperature = hlp.getcputemp()+u"°C"
+        tm_size = draw.textsize(temperature,font=font)
+        draw.text( (int(im.size[0]/2-tm_size[0]/2+5), int(im.size[1]*2/3-tm_size[1]/2) ), temperature, font=font, fill=iconcolor )
         im = Image.alpha_composite( im, self.drawhands( (tm[3],tm[4],tm[5]), hands, image ) )
         return ImageTk.PhotoImage(im)
 
@@ -420,10 +454,10 @@ elif scrsize[0]==480:
     scrmode=1
     scrsize=(480,320)
 else:
-    scrmode=1
-    scrsize=(480,320)
-    #scrmode=0
-    #scrsize=(320,240)
+#    scrmode=1
+#    scrsize=(480,320)
+    scrmode=0
+    scrsize=(320,240)
 window.overrideredirect(True)
 window.geometry(scrtype[scrmode])
 window.config(bg="black")
