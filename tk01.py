@@ -16,7 +16,7 @@ import threading
 #scrmode=0 # 320x240
 scrmode=1 # 480x320
 scrtype=["320x240-0-0","480x320+0+0"]
-dfont=[8,12]
+dfont=[9,12]
 
 class Topbar:
     """ simple top bar with buttons  """
@@ -172,10 +172,15 @@ class Clock(Switchwindow):
         self.ttf_S = 10
         self.ttf_XS = 8
 
-        if scrmode==0:
-            Clock.baksnames = Clock.baksnames320
+        #if scrmode==0:
+        #    Clock.baksnames = Clock.baksnames320
         for n in range(0,len(Clock.baksnames)):
-            Clock.backs.append( Image.open( Clock.images + Clock.baksnames[n] ) )
+            if scrmode==0:
+                im=Image.open( Clock.images + Clock.baksnames[n] )
+                im=im.resize((200,200),resample=Image.BICUBIC)
+
+            Clock.backs.append( im )
+
         self.fontXL = ImageFont.truetype("./fonts/tahomabd.ttf", self.ttf_XL)
         self.fontL = ImageFont.truetype("./fonts/tahomabd.ttf", self.ttf_L)
         self.fontM = ImageFont.truetype("./fonts/lucon.ttf", self.ttf_M)
