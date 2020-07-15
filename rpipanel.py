@@ -29,7 +29,7 @@ class Topbar:
         bfgr="black"
         bbgr="#707070"
         fgr= "#ffbf00"
-        bgr="darkblue"
+        bgr="#404040"
         font=("DejaVu Sans Mono", dfont[scrmode])
         self.label=tk.StringVar()
         self.label.set(label_text)
@@ -175,8 +175,8 @@ class Clock(Switchwindow):
         #if scrmode==0:
         #    Clock.baksnames = Clock.baksnames320
         for n in range(0,len(Clock.baksnames)):
+            im=Image.open( Clock.images + Clock.baksnames[n] )
             if scrmode==0:
-                im=Image.open( Clock.images + Clock.baksnames[n] )
                 im=im.resize((200,200),resample=Image.BICUBIC)
 
             Clock.backs.append( im )
@@ -459,10 +459,10 @@ elif scrsize[0]==480:
     scrmode=1
     scrsize=(480,320)
 else:
-#    scrmode=1
-#    scrsize=(480,320)
-    scrmode=0
-    scrsize=(320,240)
+    scrmode=1
+    scrsize=(480,320)
+#    scrmode=0
+#    scrsize=(320,240)
 window.overrideredirect(True)
 window.geometry(scrtype[scrmode])
 window.config(bg="black")

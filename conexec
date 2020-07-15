@@ -2,17 +2,16 @@
 #
 LU=/home/wlan/projekty/rpipanel
 RPI=/home/pi/py/tk/rpipanel
+CMD=rpipanel.py
 #
 HARDWARE=`uname -m`
 #
 if [ "$HARDWARE" == "x86_64" ]; then
     cd $LU
-    START=tk01.py
 else
     cd $RPI
-    START=ap01.py
     export DISPLAY=:0
-fi 
-#       
+fi
+#
 #echo `pwd`
-python3 $START
+python3 $CMD >/dev/null 2>&1
