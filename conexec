@@ -1,7 +1,7 @@
 #!/bin/bash
 #
 LU=/home/wlan/projekty/rpipanel
-RPI=/home/pi/py/tk/rpipanel
+RPI=/home/pi/py/rpipanel
 CMD=rpipanel.py
 #
 HARDWARE=`uname -m`
