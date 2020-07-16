@@ -140,6 +140,47 @@ class Shutdown(Switchwindow):
     def destroy(self):
         self.frame.destroy()
 
+class Lockpin(Switchwindow):
+    """ clock  """
+    global scrmode
+    images = "images/"
+    keys_face_fn=[ "btn_black_rect_1.png","btn_black_rect_2.png","btn_black_rect_3.png","btn_black_rect_4.png","btn_black_rect_5.png","btn_black_rect_6.png","btn_black_rect_7.png","btn_black_rect_8.png","btn_black_rect_9.png","btn_black_rect_asterix.png","btn_black_rect_0.png","btn_black_rect_#.png" ]
+    keys_label={0:"1",1:"2",2:"3",3:"4",4:"5",5:"6",6:"7",7:"8",8:"9",9:"*",10:"0",11:"#"}
+    keys_im =[]
+    key_size_x = 50
+    key_size_y = 50
+    x_start=25
+    y_start=25
+    col_no=3
+
+    def __init__(self,master,name):
+        global scrmode,scrsize
+        Switchwindow.__init__(self,master,name)
+        self.ttf_XL =28
+        Lockpin.x_start = int((scrsize[0]-Lockpin.key_size_x*Lockpin.col_no) / 2)
+        Lockpin.y_start = int((scrsize[1]-Lockpin.key_size_y*len(Lockpin.keys_face_fn)/Lockpin.col_no) / 2)
+
+        for f in Lockpin.keys_face_fn:
+            Lockpin.keys_im.append( Image.open( Lockpin.images+f ).resize((Lockpin.key_size_x,Lockpin.key_size_y),resample=Image.BICUBIC) )
+        self.fontXL = ImageFont.truetype("./fonts/tahomabd.ttf", self.ttf_XL)
+        self.canvas = tk.Canvas(self.frame,width=scrsize[0],height=scrsize[1],bg="black",bd=0, highlightthickness=0)
+        self.canvas.pack()
+        self.btn=[]
+        ind=0
+        col_no=3
+        for im in Lockpin.keys_im:
+            col = ind%Lockpin.col_no
+            row = int(ind / Lockpin.col_no)
+            position=( Lockpin.x_start+Lockpin.key_size_x/2+col*Lockpin.key_size_x, Lockpin.y_start+Lockpin.key_size_y/2+row*Lockpin.key_size_y)
+            photo =ImageTk.PhotoImage(im)
+            self.btn.append(photo)
+            btn = self.canvas.create_image( position, image=photo )
+            ind=ind+1
+        self.canvas.bind("<Button-1>",self.click)
+
+    def click(self,event):
+        pass
+
 class Clock(Switchwindow):
     """ clock  """
     global scrmode
@@ -476,9 +517,11 @@ panel_frame.pack(fill=tk.BOTH)
 
 buttons = [ ["QUIT",partial(_framereplace,"QUIT",panel_frame,Shutdown)],
             ["IP",partial(_framereplace,"IP",panel_frame,Ipconfig)],
-            ["i",partial(_framereplace,"i",panel_frame,Systeminfo)] ]
+            ["i",partial(_framereplace,"i",panel_frame,Systeminfo)],
+            ["LOK",partial(_framereplace,"LOK",panel_frame,Lockpin) ] ]
 
 tb=Topbar(tb_frame,u"",buttons)
-np = Clock(panel_frame,"clock")
+#np = Clock(panel_frame,"clock")
+np = Lockpin(panel_frame,"LOC")
 
 window.mainloop()
