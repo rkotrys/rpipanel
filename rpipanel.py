@@ -146,9 +146,13 @@ class Lockpin(Switchwindow):
     images = "images/"
     keys_face_fn=[ "btn_black_rect_1.png","btn_black_rect_2.png","btn_black_rect_3.png","btn_black_rect_4.png","btn_black_rect_5.png","btn_black_rect_6.png","btn_black_rect_7.png","btn_black_rect_8.png","btn_black_rect_9.png","btn_black_rect_asterix.png","btn_black_rect_0.png","btn_black_rect_#.png" ]
     keys_label={0:"1",1:"2",2:"3",3:"4",4:"5",5:"6",6:"7",7:"8",8:"9",9:"*",10:"0",11:"#"}
+    display="btn_black_silver.png"
     keys_im =[]
     key_size_x = 50
     key_size_y = 50
+    display_size_x = 150
+    display_size_y = 50
+    display_y_pos=30
     x_start=25
     y_start=25
     col_no=3
@@ -156,16 +160,21 @@ class Lockpin(Switchwindow):
     def __init__(self,master,name):
         global scrmode,scrsize
         Switchwindow.__init__(self,master,name)
-        self.ttf_XL =28
+        self.pin=""
+        self.pin_active="1235"
         Lockpin.x_start = int((scrsize[0]-Lockpin.key_size_x*Lockpin.col_no) / 2)
         Lockpin.y_start = int((scrsize[1]-Lockpin.key_size_y*len(Lockpin.keys_face_fn)/Lockpin.col_no) / 2)
 
         for f in Lockpin.keys_face_fn:
             Lockpin.keys_im.append( Image.open( Lockpin.images+f ).resize((Lockpin.key_size_x,Lockpin.key_size_y),resample=Image.BICUBIC) )
-        self.fontXL = ImageFont.truetype("./fonts/tahomabd.ttf", self.ttf_XL)
+        self.font = ("DejaVu Sans Mono",28)
         self.canvas = tk.Canvas(self.frame,width=scrsize[0],height=scrsize[1],bg="black",bd=0, highlightthickness=0)
-        self.canvas.pack()
+        self.canvas.pack(fill=tk.BOTH)
         self.btn=[]
+        im = Image.open( Lockpin.images+Lockpin.display ).resize((Lockpin.display_size_x,Lockpin.display_size_y),resample=Image.BICUBIC)
+        photo=ImageTk.PhotoImage(im)
+        self.btn.append(photo)
+        self.canvas.create_image( (scrsize[0]/2,Lockpin.display_y_pos), image=photo, tag="display" )
         ind=0
         col_no=3
         for im in Lockpin.keys_im:
@@ -174,12 +183,31 @@ class Lockpin(Switchwindow):
             position=( Lockpin.x_start+Lockpin.key_size_x/2+col*Lockpin.key_size_x, Lockpin.y_start+Lockpin.key_size_y/2+row*Lockpin.key_size_y)
             photo =ImageTk.PhotoImage(im)
             self.btn.append(photo)
-            btn = self.canvas.create_image( position, image=photo )
+            btn = self.canvas.create_image( position, image=photo, tag=Lockpin.keys_label[ind] )
+            self.canvas.tag_bind(btn,"<Button-1>",partial(self.btn_click,Lockpin.keys_label[ind]) )
             ind=ind+1
-        self.canvas.bind("<Button-1>",self.click)
+        #self.canvas.bind("<Button-1>",self.click)
 
-    def click(self,event):
-        pass
+    def click(self, event):
+        print("x: {}, y: {}".format(event.x,event.y))
+
+    def btn_click(self, tag, event):
+        global scrsize
+        canvas=event.widget
+        if tag=="#":
+            if self.pin==self.pin_active:
+                _framereplace( "LOC", panel_frame, Clock )
+            return
+        if tag=="*":
+            self.pin=""
+            canvas.delete("pintext")
+            return
+        if len(self.pin)<4:
+            self.pin=self.pin+tag
+        else:
+            self.pin=tag
+        canvas.delete("pintext")
+        id = self.canvas.create_text( scrsize[0]/2,Lockpin.display_y_pos,text=self.pin,fill="#ffbf00", justify=tk.CENTER, tag="pintext",font=self.font)
 
 class Clock(Switchwindow):
     """ clock  """
