@@ -40,7 +40,7 @@ class Topbar:
         self.frame.pack_propagate(0) # don't shrink
         self.frame.pack(fill=tk.X)
 
-        lbl_frame=tk.Frame(self.frame,relief=tk.FLAT,borderwidth=0,bg=bgr,width=maxwidth-150)
+        lbl_frame=tk.Frame(self.frame,relief=tk.FLAT,borderwidth=0,bg=bgr,width=maxwidth-len(buttons)*55)
         lbl_frame.pack_propagate(0) # don't shrink
         lbl_frame.pack(fill=tk.Y, side=tk.LEFT)
         lbl=tk.Label(lbl_frame,textvariable=self.time,anchor="w",justify=tk.LEFT,font=font,bg=bgr,fg=fgr)
@@ -146,7 +146,7 @@ class Lockpin(Switchwindow):
     images = "images/"
     keys_face_fn=[ "btn_black_rect_1.png","btn_black_rect_2.png","btn_black_rect_3.png","btn_black_rect_4.png","btn_black_rect_5.png","btn_black_rect_6.png","btn_black_rect_7.png","btn_black_rect_8.png","btn_black_rect_9.png","btn_black_rect_asterix.png","btn_black_rect_0.png","btn_black_rect_#.png" ]
     keys_label={0:"1",1:"2",2:"3",3:"4",4:"5",5:"6",6:"7",7:"8",8:"9",9:"*",10:"0",11:"#"}
-    display="btn_black_silver.png"
+    display="btn_black_gold.png"
     keys_im =[]
     key_size_x = 50
     key_size_y = 50
@@ -155,7 +155,7 @@ class Lockpin(Switchwindow):
     display_y_pos=30
     x_start=25
     y_start=25
-    col_no=3
+    col_no=4
 
     def __init__(self,master,name):
         global scrmode,scrsize
@@ -167,16 +167,16 @@ class Lockpin(Switchwindow):
 
         for f in Lockpin.keys_face_fn:
             Lockpin.keys_im.append( Image.open( Lockpin.images+f ).resize((Lockpin.key_size_x,Lockpin.key_size_y),resample=Image.BICUBIC) )
-        self.font = ("DejaVu Sans Mono",28)
+        self.font = ("DejaVu Sans Mono",24)
         self.canvas = tk.Canvas(self.frame,width=scrsize[0],height=scrsize[1],bg="black",bd=0, highlightthickness=0)
         self.canvas.pack(fill=tk.BOTH)
         self.btn=[]
-        im = Image.open( Lockpin.images+Lockpin.display ).resize((Lockpin.display_size_x,Lockpin.display_size_y),resample=Image.BICUBIC)
+        im = Image.open( Lockpin.images+Lockpin.display ).resize((Lockpin.key_size_x*Lockpin.col_no,int(Lockpin.key_size_y*0.8)),resample=Image.BICUBIC)
         photo=ImageTk.PhotoImage(im)
         self.btn.append(photo)
+        Lockpin.display_y_pos = Lockpin.y_start-int(Lockpin.key_size_y*0.8)
         self.canvas.create_image( (scrsize[0]/2,Lockpin.display_y_pos), image=photo, tag="display" )
         ind=0
-        col_no=3
         for im in Lockpin.keys_im:
             col = ind%Lockpin.col_no
             row = int(ind / Lockpin.col_no)
@@ -188,19 +188,19 @@ class Lockpin(Switchwindow):
             ind=ind+1
         #self.canvas.bind("<Button-1>",self.click)
 
-    def click(self, event):
-        print("x: {}, y: {}".format(event.x,event.y))
+    def clear(self):
+        self.canvas.delete("pintext")
+        self.pin=""
 
     def btn_click(self, tag, event):
         global scrsize
         canvas=event.widget
         if tag=="#":
             if self.pin==self.pin_active:
-                _framereplace( "LOC", panel_frame, Clock )
+                _unlock()
             return
         if tag=="*":
-            self.pin=""
-            canvas.delete("pintext")
+            self.clear()
             return
         if len(self.pin)<4:
             self.pin=self.pin+tag
@@ -517,6 +517,20 @@ def _framereplace(x,top_frame,Cframe):
 def test(x):
     print("test: " + x)
 
+def _unlock(unlock=True):
+    global tb_frame,panel_frame,lock_frame,lock
+    if unlock:
+        lock_frame.pack_forget()
+        tb_frame.pack(fill=tk.X)
+        panel_frame.pack(fill=tk.BOTH)
+        _framereplace("clock",panel_frame,Clock)
+    else:
+        tb_frame.pack_forget()
+        panel_frame.pack_forget()
+        lock.clear()
+        lock_frame.pack(fill=tk.BOTH)
+
+
 
 np=None
 window = tk.Tk()
@@ -537,19 +551,22 @@ window.geometry(scrtype[scrmode])
 window.config(bg="black")
 #window.geometry("480x320+0+0")
 
-
+lock_frame=tk.Frame(window,relief=tk.FLAT,borderwidth=0,bg="black",width=scrsize[0],height=scrsize[1])
 tb_frame=tk.Frame(window,relief=tk.FLAT,borderwidth=0,bg="black")
 panel_frame=tk.Frame(window,relief=tk.FLAT,borderwidth=0,bg="black",height=scrsize[1])
-tb_frame.pack(fill=tk.X)
-panel_frame.pack(fill=tk.BOTH)
+
+#tb_frame.pack(fill=tk.X)
+#panel_frame.pack(fill=tk.BOTH)
 
 buttons = [ ["QUIT",partial(_framereplace,"QUIT",panel_frame,Shutdown)],
             ["IP",partial(_framereplace,"IP",panel_frame,Ipconfig)],
             ["i",partial(_framereplace,"i",panel_frame,Systeminfo)],
-            ["LOK",partial(_framereplace,"LOK",panel_frame,Lockpin) ] ]
+            ["LOK",partial(_unlock,False) ] ]
 
 tb=Topbar(tb_frame,u"",buttons)
+
 #np = Clock(panel_frame,"clock")
-np = Lockpin(panel_frame,"LOC")
+lock = Lockpin(lock_frame,"LOC")
+lock_frame.pack(fill=tk.BOTH)
 
 window.mainloop()
