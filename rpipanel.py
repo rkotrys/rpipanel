@@ -156,12 +156,19 @@ class Lockpin(Switchwindow):
     display_y_pos=30
     x_start=25
     y_start=75
-    col_no=4
+    col_no=3
+    hi = {}
 
     def __init__(self,master,name):
         global scrmode,scrsize
         Switchwindow.__init__(self,master,name)
+        self.frame.config(height=scrsize[1])
         self.hostname=hlp.readfile("/etc/hostname")
+        Lockpin.hi=hlp.hostinfo();
+        if scrmode==0:
+            Lockpin.col_no=4
+        else:
+            Lockpin.con_no=3
         self.pin=self.hostname
         self.pin_active="1235"
         Lockpin.x_start = int((scrsize[0]-Lockpin.key_size_x*Lockpin.col_no) / 2)
@@ -169,7 +176,8 @@ class Lockpin(Switchwindow):
 
         for f in Lockpin.keys_face_fn:
             Lockpin.keys_im.append( Image.open( Lockpin.images+f ).resize((Lockpin.key_size_x,Lockpin.key_size_y),resample=Image.BICUBIC) )
-        self.font = ("DejaVu Sans Mono",20)
+        self.font = ("DejaVu Sans Mono",18)
+        self.font_s = ("DejaVu Sans Mono",11)
         self.canvas = tk.Canvas(self.frame,width=scrsize[0],height=scrsize[1],bg="black",bd=0, highlightthickness=0)
         self.canvas.pack(fill=tk.BOTH)
         self.btn=[]
@@ -180,8 +188,11 @@ class Lockpin(Switchwindow):
         self.btn.append(photo)
         self.btn.append(bgphoto)
         self.canvas.create_image( (scrsize[0]/2,scrsize[1]/2), image=bgphoto, tag="bgphoto" )
-        Lockpin.display_y_pos = Lockpin.y_start-int(Lockpin.key_size_y*0.8)
+        Lockpin.display_y_pos = Lockpin.y_start-int(Lockpin.key_size_y*0.5)
         self.canvas.create_image( (scrsize[0]/2,Lockpin.display_y_pos), image=photo, tag="display" )
+        self.canvas.create_text( scrsize[0]/2,Lockpin.display_y_pos,text=self.pin,fill="#ffbf00", justify=tk.CENTER, tag="pintext",font=self.font)
+        if "Hardware"  in Lockpin.hi:
+            self.canvas.create_text( scrsize[0]/2,scrsize[1]-10,text="Serial No: "+Lockpin.hi["Serial"],fill="#ffbf00", justify=tk.CENTER, tag="pintext",font=self.font_s)
         self.canvas.create_text( scrsize[0]/2,Lockpin.display_y_pos,text=self.pin,fill="#ffbf00", justify=tk.CENTER, tag="pintext",font=self.font)
         ind=0
         for im in Lockpin.keys_im:
