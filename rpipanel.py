@@ -148,15 +148,15 @@ class Lockpin(Switchwindow):
     keys_label={0:"1",1:"2",2:"3",3:"4",4:"5",5:"6",6:"7",7:"8",8:"9",9:"*",10:"0",11:"#"}
     display="btn_black_silver.png"
     bgimage="mesh_gold_480x320.png"
+    gold_bar_img="gold_bar_20x250.png"
     keys_im =[]
     key_size_x = 50
     key_size_y = 50
-    display_size_x = 150
-    display_size_y = 50
-    display_y_pos=30
-    x_start=25
+#    display_size_x = 150
+#    display_size_y = 50
+#    display_y_pos=30
+#    x_start=25
     y_start=75
-    col_no=3
     hi = {}
 
     def __init__(self,master,name):
@@ -167,12 +167,14 @@ class Lockpin(Switchwindow):
         Lockpin.hi=hlp.hostinfo();
         if scrmode==0:
             Lockpin.col_no=4
+            Lockpin.y_start=25
         else:
-            Lockpin.con_no=3
+            Lockpin.col_no=3
+            Lockpin.y_start=25
         self.pin=self.hostname
         self.pin_active="1235"
         Lockpin.x_start = int((scrsize[0]-Lockpin.key_size_x*Lockpin.col_no) / 2)
-        Lockpin.y_start = int((scrsize[1]-Lockpin.key_size_y*len(Lockpin.keys_face_fn)/Lockpin.col_no) / 2)
+        Lockpin.y_start = int((scrsize[1]-Lockpin.key_size_y*len(Lockpin.keys_face_fn)/Lockpin.col_no) / 2)+Lockpin.y_start
 
         for f in Lockpin.keys_face_fn:
             Lockpin.keys_im.append( Image.open( Lockpin.images+f ).resize((Lockpin.key_size_x,Lockpin.key_size_y),resample=Image.BICUBIC) )
@@ -181,18 +183,30 @@ class Lockpin(Switchwindow):
         self.canvas = tk.Canvas(self.frame,width=scrsize[0],height=scrsize[1],bg="black",bd=0, highlightthickness=0)
         self.canvas.pack(fill=tk.BOTH)
         self.btn=[]
-        bgimage = Image.open( Lockpin.images+Lockpin.bgimage )
+        if scrmode==0:
+            bgimage = Image.open( Lockpin.images+Lockpin.bgimage ).resize((scrsize[0],scrsize[1]),resample=Image.BICUBIC)
+        else:
+            bgimage = Image.open( Lockpin.images+Lockpin.bgimage )
+
         im = Image.open( Lockpin.images+Lockpin.display ).resize((Lockpin.key_size_x*Lockpin.col_no,int(Lockpin.key_size_y*0.8)),resample=Image.BICUBIC)
+        gold_bar_img=Image.open( Lockpin.images+Lockpin.gold_bar_img )
+        phpto_gold_bar=ImageTk.PhotoImage(gold_bar_img)
         bgphoto=ImageTk.PhotoImage(bgimage)
         photo=ImageTk.PhotoImage(im)
         self.btn.append(photo)
         self.btn.append(bgphoto)
+        self.btn.append(phpto_gold_bar)
         self.canvas.create_image( (scrsize[0]/2,scrsize[1]/2), image=bgphoto, tag="bgphoto" )
         Lockpin.display_y_pos = Lockpin.y_start-int(Lockpin.key_size_y*0.5)
         self.canvas.create_image( (scrsize[0]/2,Lockpin.display_y_pos), image=photo, tag="display" )
         self.canvas.create_text( scrsize[0]/2,Lockpin.display_y_pos,text=self.pin,fill="#ffbf00", justify=tk.CENTER, tag="pintext",font=self.font)
         if "Hardware"  in Lockpin.hi:
-            self.canvas.create_text( scrsize[0]/2,scrsize[1]-10,text="Serial No: "+Lockpin.hi["Serial"],fill="#ffbf00", justify=tk.CENTER, tag="pintext",font=self.font_s)
+            self.canvas.create_image( (scrsize[0]/2,scrsize[1]-10), image=phpto_gold_bar )
+            self.canvas.create_text( scrsize[0]/2,scrsize[1]-10,text="Serial No: "+Lockpin.hi["Serial"],fill="#404040", justify=tk.CENTER, font=self.font_s)
+        else:
+            self.canvas.create_image( (scrsize[0]/2,scrsize[1]-10), image=phpto_gold_bar )
+            self.canvas.create_text( scrsize[0]/2,scrsize[1]-10,text="Ser: 10000000481587",fill="#404040", justify=tk.CENTER, font=self.font_s)
+
         self.canvas.create_text( scrsize[0]/2,Lockpin.display_y_pos,text=self.pin,fill="#ffbf00", justify=tk.CENTER, tag="pintext",font=self.font)
         ind=0
         for im in Lockpin.keys_im:
@@ -565,10 +579,10 @@ elif scrsize[0]==480:
     scrmode=1
     scrsize=(480,320)
 else:
-    scrmode=1
-    scrsize=(480,320)
-#    scrmode=0
-#    scrsize=(320,240)
+#   scrmode=1
+#   scrsize=(480,320)
+    scrmode=0
+    scrsize=(320,240)
 window.overrideredirect(True)
 window.geometry(scrtype[scrmode])
 window.config(bg="black")
