@@ -146,7 +146,8 @@ class Lockpin(Switchwindow):
     images = "images/"
     keys_face_fn=[ "btn_black_rect_1.png","btn_black_rect_2.png","btn_black_rect_3.png","btn_black_rect_4.png","btn_black_rect_5.png","btn_black_rect_6.png","btn_black_rect_7.png","btn_black_rect_8.png","btn_black_rect_9.png","btn_black_rect_asterix.png","btn_black_rect_0.png","btn_black_rect_#.png" ]
     keys_label={0:"1",1:"2",2:"3",3:"4",4:"5",5:"6",6:"7",7:"8",8:"9",9:"*",10:"0",11:"#"}
-    display="btn_black_gold.png"
+    display="btn_black_silver.png"
+    bgimage="mesh_gold_480x320.png"
     keys_im =[]
     key_size_x = 50
     key_size_y = 50
@@ -154,28 +155,34 @@ class Lockpin(Switchwindow):
     display_size_y = 50
     display_y_pos=30
     x_start=25
-    y_start=25
+    y_start=75
     col_no=4
 
     def __init__(self,master,name):
         global scrmode,scrsize
         Switchwindow.__init__(self,master,name)
-        self.pin=""
+        self.hostname=hlp.readfile("/etc/hostname")
+        self.pin=self.hostname
         self.pin_active="1235"
         Lockpin.x_start = int((scrsize[0]-Lockpin.key_size_x*Lockpin.col_no) / 2)
         Lockpin.y_start = int((scrsize[1]-Lockpin.key_size_y*len(Lockpin.keys_face_fn)/Lockpin.col_no) / 2)
 
         for f in Lockpin.keys_face_fn:
             Lockpin.keys_im.append( Image.open( Lockpin.images+f ).resize((Lockpin.key_size_x,Lockpin.key_size_y),resample=Image.BICUBIC) )
-        self.font = ("DejaVu Sans Mono",24)
+        self.font = ("DejaVu Sans Mono",20)
         self.canvas = tk.Canvas(self.frame,width=scrsize[0],height=scrsize[1],bg="black",bd=0, highlightthickness=0)
         self.canvas.pack(fill=tk.BOTH)
         self.btn=[]
+        bgimage = Image.open( Lockpin.images+Lockpin.bgimage )
         im = Image.open( Lockpin.images+Lockpin.display ).resize((Lockpin.key_size_x*Lockpin.col_no,int(Lockpin.key_size_y*0.8)),resample=Image.BICUBIC)
+        bgphoto=ImageTk.PhotoImage(bgimage)
         photo=ImageTk.PhotoImage(im)
         self.btn.append(photo)
+        self.btn.append(bgphoto)
+        self.canvas.create_image( (scrsize[0]/2,scrsize[1]/2), image=bgphoto, tag="bgphoto" )
         Lockpin.display_y_pos = Lockpin.y_start-int(Lockpin.key_size_y*0.8)
         self.canvas.create_image( (scrsize[0]/2,Lockpin.display_y_pos), image=photo, tag="display" )
+        self.canvas.create_text( scrsize[0]/2,Lockpin.display_y_pos,text=self.pin,fill="#ffbf00", justify=tk.CENTER, tag="pintext",font=self.font)
         ind=0
         for im in Lockpin.keys_im:
             col = ind%Lockpin.col_no
@@ -197,12 +204,17 @@ class Lockpin(Switchwindow):
         canvas=event.widget
         if tag=="#":
             if self.pin==self.pin_active:
+                self.clear()
+                self.pin=self.hostname
                 _unlock()
-            return
-        if tag=="*":
+            else:
+                self.clear()
+                tah=""
+                self.pin=self.hostname
+        elif tag=="*":
             self.clear()
             return
-        if len(self.pin)<4:
+        elif len(self.pin)<4:
             self.pin=self.pin+tag
         else:
             self.pin=tag
