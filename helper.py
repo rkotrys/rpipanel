@@ -29,7 +29,7 @@ def hostinfo():
                elif key=="processor":
                    model[key] = "{}".format( int(model[key])+1 )
                if key=="Serial":
-                   model[key]=model[key][:8]
+                   model[key]=model[key][8:]
         model['processor']="{}".format( int(model['processor'])+1 )
 
     with open('/proc/meminfo','r') as file:
