@@ -147,8 +147,8 @@ class Lockpin(Switchwindow):
     keys_face_fn=[ "btn_black_rect_1.png","btn_black_rect_2.png","btn_black_rect_3.png","btn_black_rect_4.png","btn_black_rect_5.png","btn_black_rect_6.png","btn_black_rect_7.png","btn_black_rect_8.png","btn_black_rect_9.png","btn_black_rect_asterix.png","btn_black_rect_0.png","btn_black_rect_#.png" ]
     keys_label={0:"1",1:"2",2:"3",3:"4",4:"5",5:"6",6:"7",7:"8",8:"9",9:"*",10:"0",11:"#"}
     display="btn_black_silver.png"
-    bgimage="mesh_gold_480x320.png"
-    gold_bar_img="gold_bar_20x250.png"
+    bgimage="mesh_black_480x320.png"
+    gold_bar_img="silver_bar_20x250.png"
     keys_im =[]
     key_size_x = 50
     key_size_y = 50
@@ -201,11 +201,11 @@ class Lockpin(Switchwindow):
         self.canvas.create_image( (scrsize[0]/2,Lockpin.display_y_pos), image=photo, tag="display" )
         self.canvas.create_text( scrsize[0]/2,Lockpin.display_y_pos,text=self.pin,fill="#ffbf00", justify=tk.CENTER, tag="pintext",font=self.font)
         if "Hardware"  in Lockpin.hi:
-            self.canvas.create_image( (scrsize[0]/2,scrsize[1]-10), image=phpto_gold_bar )
-            self.canvas.create_text( scrsize[0]/2,scrsize[1]-10,text="Serial No: "+Lockpin.hi["Serial"],fill="#404040", justify=tk.CENTER, font=self.font_s)
+            self.canvas.create_image( (scrsize[0]/2,scrsize[1]-12), image=phpto_gold_bar )
+            self.canvas.create_text( scrsize[0]/2,scrsize[1]-12,text=self.hostname+": No "+Lockpin.hi["Serial"],fill="#404040", justify=tk.CENTER, font=self.font_s)
         else:
-            self.canvas.create_image( (scrsize[0]/2,scrsize[1]-10), image=phpto_gold_bar )
-            self.canvas.create_text( scrsize[0]/2,scrsize[1]-10,text="Ser: 10000000481587",fill="#404040", justify=tk.CENTER, font=self.font_s)
+            self.canvas.create_image( (scrsize[0]/2,scrsize[1]-12), image=phpto_gold_bar )
+            self.canvas.create_text( scrsize[0]/2,scrsize[1]-12,text=self.hostname+": No 12345678",fill="#404040", justify=tk.CENTER, font=self.font_s)
 
         self.canvas.create_text( scrsize[0]/2,Lockpin.display_y_pos,text=self.pin,fill="#ffbf00", justify=tk.CENTER, tag="pintext",font=self.font)
         ind=0
@@ -579,10 +579,10 @@ elif scrsize[0]==480:
     scrmode=1
     scrsize=(480,320)
 else:
-#   scrmode=1
-#   scrsize=(480,320)
-    scrmode=0
-    scrsize=(320,240)
+   scrmode=1
+   scrsize=(480,320)
+#   scrmode=0
+#   scrsize=(320,240)
 window.overrideredirect(True)
 window.geometry(scrtype[scrmode])
 window.config(bg="black")
