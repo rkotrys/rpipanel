@@ -39,13 +39,11 @@ class Topbar:
         self.frame = tk.Frame(master,relief=tk.FLAT,borderwidth=1,bg=bgr,height=barh)
         self.frame.pack_propagate(0) # don't shrink
         self.frame.pack(fill=tk.X)
-
-        lbl_frame=tk.Frame(self.frame,relief=tk.FLAT,borderwidth=0,bg=bgr,width=maxwidth-len(buttons)*55)
+        hostname=hlp.readfile("/etc/hostname")
+        lbl_frame=tk.Frame(self.frame,relief=tk.FLAT,borderwidth=0,bg=bgr,width=len(hostname)*dfont[scrmode])
         lbl_frame.pack_propagate(0) # don't shrink
         lbl_frame.pack(fill=tk.Y, side=tk.LEFT)
-        lbl=tk.Label(lbl_frame,textvariable=self.time,anchor="w",justify=tk.LEFT,font=font,bg=bgr,fg=fgr)
-        lbl.pack(side=tk.LEFT,padx=2)
-        lbl=tk.Label(lbl_frame,textvariable=self.temperature,anchor="w",justify=tk.LEFT,font=font,bg=bgr,fg=fgr)
+        lbl=tk.Label(lbl_frame,text=hostname,anchor="w",justify=tk.LEFT,font=font,bg=bgr,fg=fgr)
         lbl.pack(side=tk.LEFT,padx=2)
         lbl=tk.Label(lbl_frame,textvariable=self.label,anchor="w",justify=tk.LEFT,font=font,bg=bgr,fg=fgr)
         lbl.pack(side=tk.LEFT,padx=2)
@@ -55,17 +53,7 @@ class Topbar:
         for b in buttons:
             btn=tk.Button(btn_frame,text=b[0],command=b[1],relief=tk.RAISED,font=font,fg=fgr,bg=bbgr,highlightbackground=bbgr,padx=3,pady=0,bd=1,width=4)
             btn.pack(fill=tk.Y, side=tk.RIGHT)
-        self.settime()
-        self.settemperature()
 
-    def settime(self):
-        self.time.set(time.strftime('%-H:%M:%S'))
-        self.master.after(1000,self.settime)
-
-    def settemperature(self):
-        self.temperature.set(hlp.getcputemp()+u"°C")
-        #self.temperature.set(u"51°C")
-        self.master.after(1000,self.settemperature)
 
 class Switchwindow:
     """ virtual class  """
@@ -104,13 +92,6 @@ class Shutdown(Switchwindow):
         bpady=15
         font=("DejaVu Sans Mono", 14)
         padsize=5
-        #self.master=master
-
-        #self.frame = tk.Frame(master,relief=tk.FLAT,borderwidth=2,width=300,bg=fbg)
-        #self.frame.pack_propagate(0) # don't shrink
-        #self.frame.place(relx=0.5, rely=0.5, anchor=tk.CENTER)
-
-        #self.frame.config(bg="#808080")
         self.frame.config(bg=bfg)
 
         btn_frame=tk.Frame(self.frame,relief=tk.FLAT,borderwidth=0,bg=fbg,padx=padsize,pady=padsize)
@@ -137,26 +118,24 @@ class Shutdown(Switchwindow):
         btn=tk.Button(btn_frame,text="CANCEL",command=partial(_framereplace,"QUIT",master,Shutdown),font=font,fg="green",bg=bbg,width=10,pady=bpady)
         btn.pack(fill=tk.X)
 
-    def destroy(self):
-        self.frame.destroy()
 
 class Lockpin(Switchwindow):
-    """ clock  """
+    """ Lock the screen  """
     global scrmode
     images = "images/"
-    keys_face_fn=[ "btn_black_rect_1.png","btn_black_rect_2.png","btn_black_rect_3.png","btn_black_rect_4.png","btn_black_rect_5.png","btn_black_rect_6.png","btn_black_rect_7.png","btn_black_rect_8.png","btn_black_rect_9.png","btn_black_rect_asterix.png","btn_black_rect_0.png","btn_black_rect_#.png" ]
-    keys_label={0:"1",1:"2",2:"3",3:"4",4:"5",5:"6",6:"7",7:"8",8:"9",9:"*",10:"0",11:"#"}
+    keys_face_fn3=[ "btn_black_rect_1.png","btn_black_rect_2.png","btn_black_rect_3.png","btn_black_rect_4.png","btn_black_rect_5.png","btn_black_rect_6.png","btn_black_rect_7.png","btn_black_rect_8.png","btn_black_rect_9.png","btn_black_rect_asterix.png","btn_black_rect_0.png","btn_black_rect_#.png" ]
+    keys_face_fn4=[ "btn_black_rect_1.png","btn_black_rect_2.png","btn_black_rect_3.png","btn_black_rect_4.png","btn_black_rect_5.png","btn_black_rect_6.png","btn_black_rect_7.png","btn_black_rect_8.png","btn_black_rect_asterix.png","btn_black_rect_9.png","btn_black_rect_0.png","btn_black_rect_#.png" ]
+    keys_face_fn=keys_face_fn3
+    keys_label3={0:"1",1:"2",2:"3",3:"4",4:"5",5:"6",6:"7",7:"8",8:"9",9:"*",10:"0",11:"#"}
+    keys_label4={0:"1",1:"2",2:"3",3:"4",4:"5",5:"6",6:"7",7:"*",8:"8",9:"9",10:"0",11:"#"}
+    keys_label=keys_label3
     display="btn_black_silver.png"
-    bgimage="mesh_black_480x320.png"
-    gold_bar_img="silver_bar_20x250.png"
+    bgimage="mesh_gold_480x320.png"
+    gold_bar_img="gold_bar_20x250.png"
     keys_im =[]
     key_size_x = 50
     key_size_y = 50
-#    display_size_x = 150
-#    display_size_y = 50
-#    display_y_pos=30
-#    x_start=25
-    y_start=75
+    y_start=25
     hi = {}
 
     def __init__(self,master,name):
@@ -167,10 +146,14 @@ class Lockpin(Switchwindow):
         Lockpin.hi=hlp.hostinfo();
         if scrmode==0:
             Lockpin.col_no=4
-            Lockpin.y_start=25
+            Lockpin.y_start=20
+            Lockpin.keys_label=Lockpin.keys_label4
+            Lockpin.keys_face_fn=Lockpin.keys_face_fn4
         else:
             Lockpin.col_no=3
             Lockpin.y_start=25
+            Lockpin.keys_label=Lockpin.keys_label3
+            Lockpin.keys_face_fn=Lockpin.keys_face_fn3
         self.pin=self.hostname
         self.pin_active="1235"
         Lockpin.x_start = int((scrsize[0]-Lockpin.key_size_x*Lockpin.col_no) / 2)
@@ -373,9 +356,13 @@ class Clock(Switchwindow):
 
     def settime(self):
         self.photo=self.drowclock(self.ind)
-        self.lbl.config(image=self.photo)
-        #self.time.set(time.strftime('%-H:%M:%S'))
-        self.master.after(1000,self.settime)
+        error=False
+        try:
+            self.lbl.config(image=self.photo)
+        except:
+            error=True
+        if not error:
+            self.master.after(1000,self.settime)
 
 
 class Systeminfo(Switchwindow):
@@ -426,8 +413,13 @@ class Systeminfo(Switchwindow):
         info=""
         for d in dev:
             info=info+"{:<6} {:^16} {}\n".format( d[0],d[1], hlp.getip(d[0]).split("/",1)[0] )
-        self.lbl.config(text=info)
-        self.master.after(10000, self.getnetworks)
+        error=False
+        try:
+            self.lbl.config(text=info)
+        except:
+            error=True
+        if not error:
+            self.master.after(10000, self.getnetworks)
 
 
 class Ipconfig(Switchwindow):
@@ -458,7 +450,6 @@ class Ipconfig(Switchwindow):
             ip[no]=tk.StringVar()
             mask[no]=tk.StringVar()
             link=self.linkstate(self)
-
             lbl=tk.Label(frm,text="DEV: {}, MAC: {}".format(dev,mac) )
             lbl.pack(fill=tk.X)
             allip=hlp.getallip(dev)
