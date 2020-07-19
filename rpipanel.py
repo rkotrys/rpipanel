@@ -9,7 +9,7 @@ import time
 from functools import partial
 import helper as hlp
 import Vkeypad as vk
-from PIL import Image,ImageDraw,ImageFont,ImageColor,ImageFilter,ImageTk
+from PIL import Image,ImageDraw,ImageFont,ImageColor,ImageFilter,ImageTk,ImageEnhance
 import subprocess as proc
 import threading
 
@@ -61,6 +61,7 @@ class Switchwindow:
         global scrsize
         self.master=master
         self.window_name=name
+
         self.width=scrsize[0]
         self.height=scrsize[1]
         self.ffg="black"
@@ -128,11 +129,19 @@ class Lockpin(Switchwindow):
     keys_face_fn=keys_face_fn3
     keys_label3={0:"1",1:"2",2:"3",3:"4",4:"5",5:"6",6:"7",7:"8",8:"9",9:"*",10:"0",11:"#"}
     keys_label4={0:"1",1:"2",2:"3",3:"4",4:"5",5:"6",6:"7",7:"*",8:"8",9:"9",10:"0",11:"#"}
-    keys_label=keys_label3
+    _keys_label3={"1":"btn_black_rect_1.png","2":"btn_black_rect_2.png","3":"btn_black_rect_3.png",
+                  "4":"btn_black_rect_4.png","5":"btn_black_rect_5.png","6":"btn_black_rect_6.png",
+                  "7":"btn_black_rect_7.png","8":"btn_black_rect_8.png","9":"btn_black_rect_9.png",
+                  "*":"btn_black_rect_asterix.png","0":"btn_black_rect_0.png","#":"btn_black_rect_#.png" }
+    _keys_label4={"1":"btn_black_rect_1.png","2":"btn_black_rect_2.png","3":"btn_black_rect_3.png","4":"btn_black_rect_4.png",
+                  "5":"btn_black_rect_5.png","6":"btn_black_rect_6.png","7":"btn_black_rect_7.png","8":"btn_black_rect_8.png",
+                  "*":"btn_black_rect_asterix.png","9":"btn_black_rect_9.png","0":"btn_black_rect_0.png","#":"btn_black_rect_#.png" }
+    keys_label=_keys_label3
     display="btn_black_silver.png"
     bgimage="mesh_gold_480x320.png"
     gold_bar_img="gold_bar_20x250.png"
-    keys_im =[]
+    keys_im = {}
+    keys_im_press = {}
     key_size_x = 50
     key_size_y = 50
     y_start=25
@@ -147,93 +156,103 @@ class Lockpin(Switchwindow):
         if scrmode==0:
             Lockpin.col_no=4
             Lockpin.y_start=20
-            Lockpin.keys_label=Lockpin.keys_label4
-            Lockpin.keys_face_fn=Lockpin.keys_face_fn4
+            Lockpin.keys_face=Lockpin._keys_label4
+            #Lockpin.keys_label=Lockpin.keys_label4
+            #Lockpin.keys_face_fn=Lockpin.keys_face_fn4
         else:
             Lockpin.col_no=3
             Lockpin.y_start=25
-            Lockpin.keys_label=Lockpin.keys_label3
-            Lockpin.keys_face_fn=Lockpin.keys_face_fn3
-        self.pin=self.hostname
+            Lockpin.keys_face=Lockpin._keys_label3
+            #Lockpin.keys_label=Lockpin.keys_label3
+            #Lockpin.keys_face_fn=Lockpin.keys_face_fn3
+        self.pin=""
         self.pin_active="1235"
         Lockpin.x_start = int((scrsize[0]-Lockpin.key_size_x*Lockpin.col_no) / 2)
-        Lockpin.y_start = int((scrsize[1]-Lockpin.key_size_y*len(Lockpin.keys_face_fn)/Lockpin.col_no) / 2)+Lockpin.y_start
+        Lockpin.y_start = int((scrsize[1]-Lockpin.key_size_y*len(Lockpin.keys_face)/Lockpin.col_no) / 2)+Lockpin.y_start
 
-        for f in Lockpin.keys_face_fn:
-            Lockpin.keys_im.append( Image.open( Lockpin.images+f ).resize((Lockpin.key_size_x,Lockpin.key_size_y),resample=Image.BICUBIC) )
+        for f in Lockpin.keys_face:
+            img = Image.open( Lockpin.images+Lockpin.keys_face[f] ).resize((Lockpin.key_size_x,Lockpin.key_size_y),resample=Image.BICUBIC)
+            enhancer = ImageEnhance.Brightness(img)
+            Lockpin.keys_im[ f ] = ImageTk.PhotoImage(img)
+            Lockpin.keys_im_press[ f ] = ImageTk.PhotoImage( enhancer.enhance(1.3) )
         self.font = ("DejaVu Sans Mono",18)
         self.font_s = ("DejaVu Sans Mono",11)
         self.canvas = tk.Canvas(self.frame,width=scrsize[0],height=scrsize[1],bg="black",bd=0, highlightthickness=0)
         self.canvas.pack(fill=tk.BOTH)
-        self.btn=[]
+
+        self.btn={}
         if scrmode==0:
             bgimage = Image.open( Lockpin.images+Lockpin.bgimage ).resize((scrsize[0],scrsize[1]),resample=Image.BICUBIC)
         else:
             bgimage = Image.open( Lockpin.images+Lockpin.bgimage )
+        self.btn['bgphoto'] = ImageTk.PhotoImage(bgimage)
+        self.btn["display"] = ImageTk.PhotoImage( Image.open( Lockpin.images+Lockpin.display ).resize((Lockpin.key_size_x*Lockpin.col_no,int(Lockpin.key_size_y*0.8)),resample=Image.BICUBIC) )
+        self.btn["goldbar"] = ImageTk.PhotoImage( Image.open( Lockpin.images+Lockpin.gold_bar_img ) )
 
-        im = Image.open( Lockpin.images+Lockpin.display ).resize((Lockpin.key_size_x*Lockpin.col_no,int(Lockpin.key_size_y*0.8)),resample=Image.BICUBIC)
-        gold_bar_img=Image.open( Lockpin.images+Lockpin.gold_bar_img )
-        phpto_gold_bar=ImageTk.PhotoImage(gold_bar_img)
-        bgphoto=ImageTk.PhotoImage(bgimage)
-        photo=ImageTk.PhotoImage(im)
-        self.btn.append(photo)
-        self.btn.append(bgphoto)
-        self.btn.append(phpto_gold_bar)
-        self.canvas.create_image( (scrsize[0]/2,scrsize[1]/2), image=bgphoto, tag="bgphoto" )
+        self.canvas.create_image( (scrsize[0]/2,scrsize[1]/2), image=self.btn['bgphoto'], tag="bgphoto" )
         Lockpin.display_y_pos = Lockpin.y_start-int(Lockpin.key_size_y*0.5)
-        self.canvas.create_image( (scrsize[0]/2,Lockpin.display_y_pos), image=photo, tag="display" )
-        self.canvas.create_text( scrsize[0]/2,Lockpin.display_y_pos,text=self.pin,fill="#ffbf00", justify=tk.CENTER, tag="pintext",font=self.font)
+        self.canvas.create_image( (scrsize[0]/2,Lockpin.display_y_pos), image=self.btn["display"], tag="display" )
+        #self.canvas.create_text( scrsize[0]/2,Lockpin.display_y_pos,text=self.pin,fill="#ffbf00", justify=tk.CENTER, tag="pintext",font=self.font)
+        self.canvas.create_image( (scrsize[0]/2,scrsize[1]-12), image=self.btn["goldbar"] )
         if "Hardware"  in Lockpin.hi:
-            self.canvas.create_image( (scrsize[0]/2,scrsize[1]-12), image=phpto_gold_bar )
-            self.canvas.create_text( scrsize[0]/2,scrsize[1]-12,text=self.hostname+": No "+Lockpin.hi["Serial"],fill="#404040", justify=tk.CENTER, font=self.font_s)
+            serial=Lockpin.hi["Serial"]
         else:
-            self.canvas.create_image( (scrsize[0]/2,scrsize[1]-12), image=phpto_gold_bar )
-            self.canvas.create_text( scrsize[0]/2,scrsize[1]-12,text=self.hostname+": No 12345678",fill="#404040", justify=tk.CENTER, font=self.font_s)
-
-        self.canvas.create_text( scrsize[0]/2,Lockpin.display_y_pos,text=self.pin,fill="#ffbf00", justify=tk.CENTER, tag="pintext",font=self.font)
-        ind=0
-        for im in Lockpin.keys_im:
+            serial="12345678"
+        self.canvas.create_text( scrsize[0]/2,scrsize[1]-12,text=self.hostname+": No "+serial,fill="#404040", justify=tk.CENTER, font=self.font_s)
+        #self.canvas.create_text( scrsize[0]/2,Lockpin.display_y_pos,text=self.pin,fill="#ffbf00", justify=tk.CENTER, tag="pintext",font=self.font)
+        for label in Lockpin.keys_im:
+            ind=list(Lockpin.keys_im).index(label)
+            tag="b_"+label
             col = ind%Lockpin.col_no
             row = int(ind / Lockpin.col_no)
             position=( Lockpin.x_start+Lockpin.key_size_x/2+col*Lockpin.key_size_x, Lockpin.y_start+Lockpin.key_size_y/2+row*Lockpin.key_size_y)
-            photo =ImageTk.PhotoImage(im)
-            self.btn.append(photo)
-            btn = self.canvas.create_image( position, image=photo, tag=Lockpin.keys_label[ind] )
-            self.canvas.tag_bind(btn,"<Button-1>",partial(self.btn_click,Lockpin.keys_label[ind]) )
-            ind=ind+1
-        #self.canvas.bind("<Button-1>",self.click)
+            btn = self.canvas.create_image( position, image=Lockpin.keys_im[label], tag=tag )
+            self.canvas.tag_bind( btn, "<Button-1>", partial( self.btn_click, tag, position ) )
 
     def clear(self):
         self.canvas.delete("pintext")
         self.pin=""
 
-    def btn_click(self, tag, event):
+    def btn_click(self, tag, position, event):
         global scrsize
-        canvas=event.widget
-        if tag=="#":
+        label=tag.split("_",2)[1]
+        #canvas=event.widget
+        self.canvas.delete(tag)
+        btn=self.canvas.create_image( position, image=Lockpin.keys_im_press[label], tag=tag )
+        self.press_tag=tag
+        self.press_position=position
+        self.master.after( 500, self.btn_relise )
+        if label=="#":
             if self.pin==self.pin_active:
                 self.clear()
-                self.pin=self.hostname
+                #self.pin=self.hostname
                 _unlock()
             else:
                 self.clear()
                 tah=""
-                self.pin=self.hostname
-        elif tag=="*":
+                #self.pin=self.hostname
+        elif label=="*":
             self.clear()
             return
         elif len(self.pin)<4:
-            self.pin=self.pin+tag
+            self.pin=self.pin+label
         else:
-            self.pin=tag
-        canvas.delete("pintext")
+            self.pin=label
+        self.canvas.delete("pintext")
         id = self.canvas.create_text( scrsize[0]/2,Lockpin.display_y_pos,text=self.pin,fill="#ffbf00", justify=tk.CENTER, tag="pintext",font=self.font)
+
+    def btn_relise(self):
+        label=self.press_tag.split("_",2)[1]
+        self.canvas.delete(self.press_tag)
+        btn=self.canvas.create_image( self.press_position, image=Lockpin.keys_im[label], tag=self.press_tag )
+        self.canvas.tag_bind( btn, "<Button-1>", partial( self.btn_click, self.press_tag, self.press_position ) )
+
 
 class Clock(Switchwindow):
     """ clock  """
     global scrmode
     images = "images/"
-    baksnames = [ "t1b.png","t3blue_250.png","t3coper_250.png","t3gold_250.png","t3green_250.png","t4b_250.png","t4b_gold_250.png" ]
+    baksnames = [ "t4b_gold_250.png","t4b_blue_250.png","t4b_green_250.png","t4b_250.png","t4b_bright_250.png","t1b.png","t3blue_250.png","t3coper_250.png","t3gold_250.png","t3green_250.png" ]
     baksnames320 = [ "z1b.bmp","z2b.bmp","z3b.bmp","z4.bmp","z6.bmp"]
     backs = []
 
@@ -243,10 +262,7 @@ class Clock(Switchwindow):
         self.fbg="black"
         self.bfg="#ff8000"
 
-        if scrmode==0:
-            self.ind=0
-        else:
-            self.ind=3
+        self.ind=0
         self.s_color = (255,0,0,255)
         self.m_color = (255,190,0,255)
         self.h_color = (255,190,0,255)
@@ -594,7 +610,7 @@ buttons = [ ["QUIT",partial(_framereplace,"QUIT",panel_frame,Shutdown)],
 tb=Topbar(tb_frame,u"",buttons)
 
 #np = Clock(panel_frame,"clock")
-lock = Lockpin(lock_frame,"LOC")
+lock = Lockpin( lock_frame, "LOC" )
 lock_frame.pack(fill=tk.BOTH)
 
 window.mainloop()
