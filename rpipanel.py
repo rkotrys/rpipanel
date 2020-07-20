@@ -142,10 +142,10 @@ class Lockpin(Switchwindow):
     gold_bar_img="gold_bar_20x250.png"
     keys_im = {}
     keys_im_press = {}
-    key_size_x = 100
+    key_size_x = 80
     key_size_y = 50
     y_start=25
-    light_time = 200
+    light_time = 100
     light_level = 0.5
     hi = {}
 
@@ -158,12 +158,16 @@ class Lockpin(Switchwindow):
         if scrmode==0:
             Lockpin.col_no=4
             Lockpin.y_start=20
+            Lockpin.key_size_x = 40
+            Lockpin.key_size_y = 50
             Lockpin.keys_face=Lockpin._keys_label4
             #Lockpin.keys_label=Lockpin.keys_label4
             #Lockpin.keys_face_fn=Lockpin.keys_face_fn4
         else:
             Lockpin.col_no=3
             Lockpin.y_start=25
+            Lockpin.key_size_x = 75
+            Lockpin.key_size_y = 45
             Lockpin.keys_face=Lockpin._keys_label3
             #Lockpin.keys_label=Lockpin.keys_label3
             #Lockpin.keys_face_fn=Lockpin.keys_face_fn3
@@ -174,6 +178,7 @@ class Lockpin(Switchwindow):
 
         for f in Lockpin.keys_face:
             img = Image.open( Lockpin.images+Lockpin.keys_face[f] ).resize((Lockpin.key_size_x,Lockpin.key_size_y),resample=Image.BICUBIC)
+            #enhancer = ImageEnhance.Color(img)
             enhancer = ImageEnhance.Brightness(img)
             Lockpin.keys_im[ f ] = ImageTk.PhotoImage(img)
             Lockpin.keys_im_press[ f ] = ImageTk.PhotoImage( enhancer.enhance(Lockpin.light_level) )
