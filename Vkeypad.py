@@ -114,7 +114,9 @@ class Numpad:
         bg_entry="white"
         fg_key="black"
         bg_key="#dddddd"
-        bg_frame="black"
+        bg_frame="#606060"
+        pad=1
+
         self.font=("DejaVu Sans Mono", 12);
         k=['0','1','2','3','4','5','6','7','8','9','A','B','C','D','E','F','x',' ','.','/','<','CL','OK','X']
         maxnumitems=5
@@ -126,31 +128,31 @@ class Numpad:
         self.frame = tk.Frame(master=self.master,relief=tk.FLAT,borderwidth=2,bg=bg_frame)
         self.frame.place(relx=0.5, rely=0.5, anchor=tk.CENTER)
         self.frame.focus_set()
-        self.entry=tk.Entry(self.frame,width=20,font=self.font,bg=bg_entry,fg=fg_entry)
+        self.entry=tk.Entry(self.frame,width=21,font=self.font,bg=bg_entry,fg=fg_entry)
         self.entry.insert(0,entrytext)
         self.entry.grid(row=0,column=0,columnspan=5,pady=2,padx=2)
         i=0
         for n in k:
             nrow=int(i/maxnumitems)+1
             if n=="OK":
-                frm_bt=tk.Frame(self.frame,borderwidth=0,relief=tk.FLAT,height=btn_size,width=btn_sizex*2,bg=bg_frame)
+                frm_bt=tk.Frame(self.frame,borderwidth=0,relief=tk.FLAT,height=btn_size,width=btn_sizex*2,bg=bg_frame,highlightthickness=0)
                 frm_bt.pack_propagate(0) # don't shrink
-                frm_bt.grid(row=nrow,column=i%maxnumitems,padx=0,pady=0,columnspan=2)
+                frm_bt.grid(row=nrow,column=i%maxnumitems,padx=pad,pady=pad,columnspan=2)
                 i=i+1
             elif n=="X":
-                frm_bt=tk.Frame(self.frame,borderwidth=0,relief=tk.FLAT,height=btn_size,width=btn_sizex,bg=bg_frame)
+                frm_bt=tk.Frame(self.frame,borderwidth=0,relief=tk.FLAT,height=btn_size,width=btn_sizex,bg=bg_frame,highlightthickness=0)
                 frm_bt.pack_propagate(0) # don't shrink
-                frm_bt.grid(row=nrow,column=i%maxnumitems,padx=0,pady=0)
+                frm_bt.grid(row=nrow,column=i%maxnumitems,padx=pad,pady=pad)
             elif n=="CL":
-                frm_bt=tk.Frame(self.frame,borderwidth=0,relief=tk.FLAT,height=btn_size,width=btn_sizex,bg=bg_frame)
+                frm_bt=tk.Frame(self.frame,borderwidth=0,relief=tk.FLAT,height=btn_size,width=btn_sizex,bg=bg_frame,highlightthickness=0)
                 frm_bt.pack_propagate(0) # don't shrink
-                frm_bt.grid(row=nrow,column=i%maxnumitems,padx=0,pady=0)
+                frm_bt.grid(row=nrow,column=i%maxnumitems,padx=pad,pady=pad)
             else:
-                frm_bt=tk.Frame(self.frame,borderwidth=0,relief=tk.FLAT,height=btn_size,width=btn_sizex,bg=bg_frame)
+                frm_bt=tk.Frame(self.frame,borderwidth=0,relief=tk.FLAT,height=btn_size,width=btn_sizex,bg=bg_frame,highlightthickness=0)
                 frm_bt.pack_propagate(0) # don't shrink
-                frm_bt.grid(row=nrow,column=i%maxnumitems,padx=0,pady=0)
+                frm_bt.grid(row=nrow,column=i%maxnumitems,padx=pad,pady=pad)
 
-            bt=tk.Button(frm_bt,text=n,command=partial(self.kpres, n),font=self.font,fg=fg_key,bg=bg_key)
+            bt=tk.Button(frm_bt,text=n,command=partial(self.kpres, n),font=self.font,fg=fg_key,bg=bg_key,highlightthickness=0)
             bt.pack(fill=tk.X)
             i=i+1
         #self.top.geometry("+40+40")
