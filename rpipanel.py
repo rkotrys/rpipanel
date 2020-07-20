@@ -142,9 +142,11 @@ class Lockpin(Switchwindow):
     gold_bar_img="gold_bar_20x250.png"
     keys_im = {}
     keys_im_press = {}
-    key_size_x = 50
+    key_size_x = 100
     key_size_y = 50
     y_start=25
+    light_time = 200
+    light_level = 0.5
     hi = {}
 
     def __init__(self,master,name):
@@ -174,7 +176,7 @@ class Lockpin(Switchwindow):
             img = Image.open( Lockpin.images+Lockpin.keys_face[f] ).resize((Lockpin.key_size_x,Lockpin.key_size_y),resample=Image.BICUBIC)
             enhancer = ImageEnhance.Brightness(img)
             Lockpin.keys_im[ f ] = ImageTk.PhotoImage(img)
-            Lockpin.keys_im_press[ f ] = ImageTk.PhotoImage( enhancer.enhance(1.3) )
+            Lockpin.keys_im_press[ f ] = ImageTk.PhotoImage( enhancer.enhance(Lockpin.light_level) )
         self.font = ("DejaVu Sans Mono",18)
         self.font_s = ("DejaVu Sans Mono",11)
         self.canvas = tk.Canvas(self.frame,width=scrsize[0],height=scrsize[1],bg="black",bd=0, highlightthickness=0)
@@ -221,7 +223,7 @@ class Lockpin(Switchwindow):
         btn=self.canvas.create_image( position, image=Lockpin.keys_im_press[label], tag=tag )
         self.press_tag=tag
         self.press_position=position
-        self.master.after( 500, self.btn_relise )
+        self.master.after( Lockpin.light_time, self.btn_relise )
         if label=="#":
             if self.pin==self.pin_active:
                 self.clear()
