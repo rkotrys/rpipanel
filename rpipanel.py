@@ -329,6 +329,7 @@ class Clock(Switchwindow):
             self.ind1 = 0;
 
     def nextbg(self,event):
+        """  ???  """
         keys = [*self.bgimage]
         if self.ind2 < len(self.bgimage)-1:
             self.ind2=self.ind2+1;
