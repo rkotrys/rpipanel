@@ -260,9 +260,13 @@ class Clock(Switchwindow):
         Switchwindow.__init__(self,master,name)
         self.fbg="black"
         self.bfg="#ff8000"
-        bgimage_name="mesh_gold_480x320.png"
+        self.face_names={"gold":"z1b_gold_transparent.png","blue":"z1b_blue_transparent.png","green":"z1b_green_transparent.png","red":"z1b_red_transparent.png","purple":"z1b_purple_transparent.png","black":"z1b_black_transparent.png"}
+        self.bgimage_names={"gold":"mesh_gold_480x320.png","blue":"mesh_blue_480x320.png","green":"mesh_green_480x320.png","red":"mesh_red_480x320.png","purple":"mesh_purple_480x320.png","black":"mesh_black_480x320.png"}
+        #bgimage_name="mesh_gold_480x320.png"
 
         self.ind=5
+        self.ind1=0
+        self.ind2=0
         self.s_color = (255,0,0,255)
         self.m_color = (255,190,0,255)
         self.h_color = (255,190,0,255)
@@ -277,18 +281,14 @@ class Clock(Switchwindow):
         self.ttf_S = 10
         self.ttf_XS = 8
 
-        #if scrmode==0:
-        #    Clock.baksnames = Clock.baksnames320
-        for n in range(0,len(Clock.baksnames)):
-            im=Image.open( Clock.images + Clock.baksnames[n] )
-            im=im.resize((scrsize[1]-45,scrsize[1]-45),resample=Image.BICUBIC)
-            Clock.backs.append( im )
-        #if scrmode==0:
-        bgimage = Image.open( Lockpin.images+bgimage_name ).resize((scrsize[0],scrsize[1]),resample=Image.BICUBIC)
-        #else:
-        #    bgimage = Image.open( Lockpin.images+bgimage_name )
+        self.face={}
+        self.bgimage={}
         self.images = {}
-        self.images["bgphoto"] = ImageTk.PhotoImage(bgimage)
+        for n in self.face_names:
+            self.face[n]=Image.open( Clock.images + self.face_names[n] ).resize((scrsize[1]-45,scrsize[1]-45),resample=Image.BICUBIC)
+            self.bgimage[n]=Image.open( Clock.images + self.bgimage_names[n] ).resize((scrsize[0],scrsize[1]),resample=Image.BICUBIC)
+        self.run_bgimage = ImageTk.PhotoImage(self.bgimage[ [*self.bgimage][self.ind2] ])
+        self.images['btn_next']= ImageTk.PhotoImage( Image.open( Clock.images + "btn_gold_50.png" ) )
 
         self.fontXL = ImageFont.truetype("./fonts/tahomabd.ttf", self.ttf_XL)
         self.fontL = ImageFont.truetype("./fonts/tahomabd.ttf", self.ttf_L)
@@ -302,25 +302,49 @@ class Clock(Switchwindow):
         self.colck_y_ofset = 10
         self.canvas = tk.Canvas(self.frame,width=scrsize[0],height=scrsize[1],bg="black",bd=0, highlightthickness=0)
         self.canvas.pack(fill=tk.BOTH)
-        self.canvas.create_image( (scrsize[0]/2,scrsize[1]/2-20), image=self.images['bgphoto'], tag="bgphoto" )
-        self.images["clock"]=self.drowclock(self.ind)
-        self.canvas.create_image( (scrsize[0]/2,scrsize[1]/2-self.colck_y_ofset), image=self.images['clock'], tag="clock" )
-        self.images['btn_next']= ImageTk.PhotoImage( Image.open( Clock.images + "btn_gold_50.png" ) )
-        self.canvas.create_image( (scrsize[0]-30,scrsize[1]-60), image=self.images['btn_next'], tag="btn_next" )
-        self.canvas.tag_bind( "btn_next", "<Button-1>", self.nextface )
+
+        self.drow_all()
+
         self.settime()
 
-    def nextface(self,event):
-        if self.ind < len(Clock.baksnames)-1:
-            self.ind=self.ind+1;
-        else:
-            self.ind = 0;
+    def drow_all(self):
+        self.canvas.delete("clock")
+        self.canvas.delete("btn_next1")
+        self.canvas.delete("btn_next2")
+        self.canvas.delete("bgphoto")
 
-    def drowclock(self,ind):
+        self.canvas.create_image( (scrsize[0]/2,scrsize[1]/2-20), image=self.run_bgimage, tag="bgphoto" )
+        self.run_face=self.drowclock()
+        self.canvas.create_image( (scrsize[0]/2,scrsize[1]/2-self.colck_y_ofset), image=self.run_face, tag="clock" )
+        self.canvas.create_image( (scrsize[0]-30,scrsize[1]-60), image=self.images['btn_next'], tag="btn_next1" )
+        self.canvas.tag_bind( "btn_next1", "<Button-1>", self.nextface )
+        self.canvas.create_image( (scrsize[0]-30,scrsize[1]-120), image=self.images['btn_next'], tag="btn_next2" )
+        self.canvas.tag_bind( "btn_next2", "<Button-1>", self.nextbg )
+
+
+    def nextface(self,event):
+        keys = [*self.face]
+        if self.ind1 < len(self.face)-1:
+            self.ind1=self.ind1+1;
+        else:
+            self.ind1 = 0;
+
+    def nextbg(self,event):
+        keys = [*self.bgimage]
+        if self.ind2 < len(self.bgimage)-1:
+            self.ind2=self.ind2+1;
+        else:
+            self.ind2 = 0;
+        self.run_bgimage = ImageTk.PhotoImage( self.bgimage[ keys[self.ind2] ] )
+        self.drow_all()
+
+
+
+    def drowclock(self):
         global scrmode,scrsize
         iconcolor = (225,180,0) #(200,200,255)
         tm = time.localtime()
-        image = Clock.backs[ind].copy()
+        image = self.face[[*self.face][self.ind1]].copy()
         im = Image.new( "RGBA", image.size, (255,255,255,255) )
         im.paste(image)
         draw = ImageDraw.Draw(im)
@@ -375,7 +399,7 @@ class Clock(Switchwindow):
             error=True
         if not error:
             self.master.after(1000,self.settime)
-            self.images["clock"]=self.drowclock(self.ind)
+            self.images["clock"]=self.drowclock()
             self.canvas.create_image( (scrsize[0]/2,scrsize[1]/2-self.colck_y_ofset), image=self.images['clock'], tag="clock" )
 
 
