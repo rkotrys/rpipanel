@@ -302,7 +302,6 @@ class Clock(Switchwindow):
         self.colck_y_ofset = 10
         self.canvas = tk.Canvas(self.frame,width=scrsize[0],height=scrsize[1],bg="black",bd=0, highlightthickness=0)
         self.canvas.pack(fill=tk.BOTH)
-
         self.drow_all()
 
         self.settime()
