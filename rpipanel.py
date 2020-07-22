@@ -9,69 +9,56 @@ import time
 from functools import partial
 import helper as hlp
 import Vkeypad as vk
+import Appconfig as Conf
 from PIL import Image,ImageDraw,ImageFont,ImageColor,ImageFilter,ImageTk,ImageEnhance
 import subprocess as proc
 import threading
+import configparser as cnfp
+import json
 
-#scrmode=0 # 320x240
-scrmode=1 # 480x320
-scrtype=["320x240-0-0","480x320+0+0"]
 dfont=[9,12]
 
 class Topbar:
     """ simple top bar with buttons  """
     def __init__(self,master,label_text,buttons):
-        global scrsize,dfont,scrmode
+        global cnf,scrsize,scrmode
         self.master=master
         maxwidth=scrsize[0]
         maxheight=scrsize[1]
-        barh=24
-        bfgr="black"
-        bbgr="#707070"
-        fgr= "#ffbf00"
-        bgr="#404040"
-        font=("DejaVu Sans Mono", dfont[scrmode])
-        self.label=tk.StringVar()
-        self.label.set(label_text)
-        self.temperature=tk.StringVar()
-        self.time=tk.StringVar()
-
-        self.frame = tk.Frame(master,relief=tk.FLAT,borderwidth=1,bg=bgr,height=barh)
+        font=( cnf.dml['topbar']['font'], cnf.dml['global']['fonts_size'][scrmode])
+        self.frame = tk.Frame(master,relief=tk.FLAT,borderwidth=1,bg=cnf.dml['topbar']['bar_bg'],height=cnf.dml['topbar']['height'])
         self.frame.pack_propagate(0) # don't shrink
         self.frame.pack(fill=tk.X)
         hostname=hlp.readfile("/etc/hostname")
-        lbl_frame=tk.Frame(self.frame,relief=tk.FLAT,borderwidth=0,bg=bgr,width=len(hostname)*dfont[scrmode])
+        lbl_frame=tk.Frame(self.frame,relief=tk.FLAT,borderwidth=0,bg=cnf.dml['topbar']['bar_bg'], width=len(hostname)*cnf.dml['global']['fonts_size'][scrmode])
         lbl_frame.pack_propagate(0) # don't shrink
         lbl_frame.pack(fill=tk.Y, side=tk.LEFT)
-        lbl=tk.Label(lbl_frame,text=hostname,anchor="w",justify=tk.LEFT,font=font,bg=bgr,fg=fgr)
-        lbl.pack(side=tk.LEFT,padx=2)
-        lbl=tk.Label(lbl_frame,textvariable=self.label,anchor="w",justify=tk.LEFT,font=font,bg=bgr,fg=fgr)
+        lbl=tk.Label(lbl_frame,text=hostname,anchor="w",justify=tk.LEFT,font=font,bg=cnf.dml['topbar']['lbl_bg'],fg=cnf.dml['topbar']['lbl_fg'])
         lbl.pack(side=tk.LEFT,padx=2)
 
-        btn_frame=tk.Frame(self.frame,relief=tk.FLAT,borderwidth=0,bg=bgr)
+        btn_frame=tk.Frame(self.frame,relief=tk.FLAT,borderwidth=0,bg=cnf.dml['topbar']['bar_bg'])
         btn_frame.pack(fill=tk.Y, side=tk.RIGHT)
         for b in buttons:
-            btn=tk.Button(btn_frame,text=b[0],command=b[1],relief=tk.RAISED,font=font,fg=fgr,bg=bbgr,highlightbackground=bbgr,padx=3,pady=0,bd=1,width=4)
+            btn=tk.Button(btn_frame,text=b[0],command=b[1],relief=tk.RAISED,font=font,fg=cnf.dml['topbar']['btn_fg'],bg=cnf.dml['topbar']['btn_bg'],highlightbackground=cnf.dml['topbar']['lbl_bg'],padx=3,pady=0,bd=1,width=4)
             btn.pack(fill=tk.Y, side=tk.RIGHT)
 
 
 class Switchwindow:
     """ virtual class  """
     def __init__(self,master,name):
-        global scrsize
+        global cnf,scrsize
         self.master=master
         self.window_name=name
 
         self.width=scrsize[0]
         self.height=scrsize[1]
-        self.ffg="black"
-        self.fbg="#c0c0c0"
-        self.bfg="black"
-        self.bbg="#c0c0c0"
+        self.fbg=cnf.dml['switchwindow']['frm_bg']
+        self.bfg=cnf.dml['switchwindow']['btn_fg']
+        self.bbg=cnf.dml['switchwindow']['btn_bg']
         self.bpadx=2
         self.bpady=2
-        self.monofont="DejaVu Sans Mono"
-        self.frame = tk.Frame(master,relief=tk.FLAT, bg=self.fbg, width=self.width, height=self.height-24, borderwidth=0 )
+        self.monofont=cnf.dml['global']['font']
+        self.frame = tk.Frame(master,relief=tk.FLAT, bg=self.fbg, width=self.width, height=(self.height-cnf.dml['topbar']['height']), borderwidth=0 )
         self.frame.pack_propagate(0) # don't shrink
         #self.frame.pack(fill=tk.X, anchor=tk.CENTER)
         self.frame.place(relx=0.5, rely=0.5, anchor=tk.CENTER)
@@ -85,16 +72,18 @@ class Switchwindow:
 class Shutdown(Switchwindow):
     """ shutdown & reload  """
     def __init__(self,master,name):
+        global cnf
         Switchwindow.__init__(self,master,name)
-        fbg = "black"
-        ffg = "#ffffff"
-        bfg = "darkred"
-        bbg = "#ffbf00"
-        bpady=15
-        font=("DejaVu Sans Mono", 14)
-        padsize=5
-        self.frame.config(bg=bfg)
 
+        fbg = cnf.dml['shutdown']['frm_bg']
+        bfg = cnf.dml['shutdown']['btn_fg']
+        bbg = cnf.dml['shutdown']['btn_bg']
+        bpady=cnf.dml['shutdown']['btn_pady']
+        font=(cnf.dml['global']['font'], cnf.dml['shutdown']['btn_font_size'])
+        padsize=cnf.dml['shutdown']['btn_pad']
+        self.frame.config(bg=fbg)
+
+        master.config(bg=fbg)
         btn_frame=tk.Frame(self.frame,relief=tk.FLAT,borderwidth=0,bg=fbg,padx=padsize,pady=padsize)
         #btn_frame.pack(fill=tk.X)
         btn_frame.grid(row=0,column=0,padx=5,pady=5)
@@ -122,7 +111,7 @@ class Shutdown(Switchwindow):
 
 class Lockpin(Switchwindow):
     """ Lock the screen  """
-    global scrmode
+    global cnf
     images = "images/"
     _keys_label3={"1":"btn_black_rect_1.png","2":"btn_black_rect_2.png","3":"btn_black_rect_3.png",
                   "4":"btn_black_rect_4.png","5":"btn_black_rect_5.png","6":"btn_black_rect_6.png",
@@ -132,77 +121,74 @@ class Lockpin(Switchwindow):
                   "5":"btn_black_rect_5.png","6":"btn_black_rect_6.png","7":"btn_black_rect_7.png","8":"btn_black_rect_8.png",
                   "*":"btn_black_rect_asterix.png","9":"btn_black_rect_9.png","0":"btn_black_rect_0.png","#":"btn_black_rect_#.png" }
     keys_label=_keys_label3
-    display="btn_black_silver.png"
-    bgimage="mesh_gold_480x320.png"
-    gold_bar_img="gold_bar_20x250.png"
-    key_size_x = 80
-    key_size_y = 50
-    y_start=25
-    light_time = 100
-    light_level = 0.5
+
     keys_im = {}
     keys_im_press = {}
     hi = {}
 
     def __init__(self,master,name):
-        global scrmode,scrsize
+        global cnf,scrmode,scrsize
         Switchwindow.__init__(self,master,name)
         self.frame.config(height=scrsize[1])
         self.hostname=hlp.readfile("/etc/hostname")
         Lockpin.hi=hlp.hostinfo();
-        if scrmode==0:
-            Lockpin.col_no=4
-            Lockpin.y_start=20
-            Lockpin.key_size_x = 40
-            Lockpin.key_size_y = 50
-            Lockpin.keys_face=Lockpin._keys_label4
-        else:
-            Lockpin.col_no=3
-            Lockpin.y_start=25
-            Lockpin.key_size_x = 75
-            Lockpin.key_size_y = 45
-            Lockpin.keys_face=Lockpin._keys_label3
-        self.pin=""
-        self.pin_active="1235"
-        Lockpin.x_start = int((scrsize[0]-Lockpin.key_size_x*Lockpin.col_no) / 2)
-        Lockpin.y_start = int((scrsize[1]-Lockpin.key_size_y*len(Lockpin.keys_face)/Lockpin.col_no) / 2)+Lockpin.y_start
 
-        for f in Lockpin.keys_face:
-            img = Image.open( Lockpin.images+Lockpin.keys_face[f] ).resize((Lockpin.key_size_x,Lockpin.key_size_y),resample=Image.BICUBIC)
+        self.display= cnf.dml['lockpin']['display']
+        self.bgimage= cnf.dml['lockpin']['background']
+        self.gold_bar_img=cnf.dml['lockpin']['serial_bar']
+        self.key_size_x = cnf.dml['lockpin']['keysize'][0]
+        self.key_size_y = cnf.dml['lockpin']['keysize'][1]
+        self.light_time = cnf.dml['lockpin']['lighttime']
+        self.light_level = cnf.dml['lockpin']['lightlevel']
+
+        if scrmode==0:
+            sekf.col_no=4
+            self.y_start=cnf.dml['lockpin']['ystart'][scrmode]
+            self.key_size_x = cnf.dml['lockpin']['keysize'][scrmode][0]
+            self.key_size_y = cnf.dml['lockpin']['keysize'][scrmode][1]
+            self.keys_face=Lockpin._keys_label4
+        else:
+            self.col_no=3
+            self.y_start=cnf.dml['lockpin']['ystart'][scrmode]
+            self.key_size_x = cnf.dml['lockpin']['keysize'][scrmode][0]
+            self.key_size_y = cnf.dml['lockpin']['keysize'][scrmode][1]
+            self.keys_face=Lockpin._keys_label3
+        self.pin=""
+        self.pin_active=cnf.dml['lockpin']['pinactive']
+        self.x_start = int((scrsize[0]-self.key_size_x*self.col_no) / 2)
+        self.y_start = int((scrsize[1]-self.key_size_y*len(self.keys_face)/self.col_no) / 2)+self.y_start
+
+        for f in Lockpin.keys_label:
+            img = Image.open( Lockpin.images+self.keys_label[f] ).resize((self.key_size_x,self.key_size_y),resample=Image.BICUBIC)
             enhancer = ImageEnhance.Brightness(img)
             Lockpin.keys_im[ f ] = ImageTk.PhotoImage(img)
-            Lockpin.keys_im_press[ f ] = ImageTk.PhotoImage( enhancer.enhance(Lockpin.light_level) )
-        self.font = ("DejaVu Sans Mono",18)
-        self.font_s = ("DejaVu Sans Mono",11)
+            Lockpin.keys_im_press[ f ] = ImageTk.PhotoImage( enhancer.enhance(self.light_level) )
+        self.font = (cnf.dml['lockpin']['display_font'],cnf.dml['lockpin']['font_size_l'])
+        self.font_s = (cnf.dml['lockpin']['font'],cnf.dml['lockpin']['font_size_s'])
         self.canvas = tk.Canvas(self.frame,width=scrsize[0],height=scrsize[1],bg="black",bd=0, highlightthickness=0)
         self.canvas.pack(fill=tk.BOTH)
 
         self.btn={}
-        if scrmode==0:
-            bgimage = Image.open( Lockpin.images+Lockpin.bgimage ).resize((scrsize[0],scrsize[1]),resample=Image.BICUBIC)
-        else:
-            bgimage = Image.open( Lockpin.images+Lockpin.bgimage )
+        bgimage = Image.open( Lockpin.images+self.bgimage ).resize((scrsize[0],scrsize[1]),resample=Image.BICUBIC)
         self.btn['bgphoto'] = ImageTk.PhotoImage(bgimage)
-        self.btn["display"] = ImageTk.PhotoImage( Image.open( Lockpin.images+Lockpin.display ).resize((Lockpin.key_size_x*Lockpin.col_no,int(Lockpin.key_size_y*0.9)),resample=Image.BICUBIC) )
-        self.btn["goldbar"] = ImageTk.PhotoImage( Image.open( Lockpin.images+Lockpin.gold_bar_img ) )
+        self.btn["display"] = ImageTk.PhotoImage( Image.open( Lockpin.images+self.display ).resize((self.key_size_x*self.col_no,int(self.key_size_y*0.9)),resample=Image.BICUBIC) )
+        self.btn["goldbar"] = ImageTk.PhotoImage( Image.open( Lockpin.images+self.gold_bar_img ) )
 
         self.canvas.create_image( (scrsize[0]/2,scrsize[1]/2), image=self.btn['bgphoto'], tag="bgphoto" )
-        Lockpin.display_y_pos = Lockpin.y_start-int(Lockpin.key_size_y*0.5)
-        self.canvas.create_image( (scrsize[0]/2,Lockpin.display_y_pos), image=self.btn["display"], tag="display" )
-        #self.canvas.create_text( scrsize[0]/2,Lockpin.display_y_pos,text=self.pin,fill="#ffbf00", justify=tk.CENTER, tag="pintext",font=self.font)
+        self.display_y_pos = self.y_start-int(self.key_size_y*0.5)
+        self.canvas.create_image( (scrsize[0]/2,self.display_y_pos), image=self.btn["display"], tag="display" )
         self.canvas.create_image( (scrsize[0]/2,scrsize[1]-12), image=self.btn["goldbar"] )
         if "Hardware"  in Lockpin.hi:
             serial=Lockpin.hi["Serial"]
         else:
             serial="12345678"
-        self.canvas.create_text( scrsize[0]/2,scrsize[1]-12,text=self.hostname+": No "+serial,fill="#404040", justify=tk.CENTER, font=self.font_s)
-        #self.canvas.create_text( scrsize[0]/2,Lockpin.display_y_pos,text=self.pin,fill="#ffbf00", justify=tk.CENTER, tag="pintext",font=self.font)
+        self.canvas.create_text( scrsize[0]/2,scrsize[1]-12,text=self.hostname+": No "+serial,fill=cnf.dml['lockpin']['serial_color'], justify=tk.CENTER, font=self.font_s)
         for label in Lockpin.keys_im:
             ind=list(Lockpin.keys_im).index(label)
             tag="b_"+label
-            col = ind%Lockpin.col_no
-            row = int(ind / Lockpin.col_no)
-            position=( Lockpin.x_start+Lockpin.key_size_x/2+col*Lockpin.key_size_x, Lockpin.y_start+Lockpin.key_size_y/2+row*Lockpin.key_size_y)
+            col = ind%self.col_no
+            row = int(ind / self.col_no)
+            position=( self.x_start+self.key_size_x/2+col*self.key_size_x, self.y_start+self.key_size_y/2+row*self.key_size_y)
             btn = self.canvas.create_image( position, image=Lockpin.keys_im[label], tag=tag )
             self.canvas.tag_bind( btn, "<Button-1>", partial( self.btn_click, tag, position ) )
 
@@ -211,23 +197,19 @@ class Lockpin(Switchwindow):
         self.pin=""
 
     def btn_click(self, tag, position, event):
-        global scrsize
+        global cnf,scrsize
         label=tag.split("_",2)[1]
-        #canvas=event.widget
         self.canvas.delete(tag)
         btn=self.canvas.create_image( position, image=Lockpin.keys_im_press[label], tag=tag )
         self.press_tag=tag
         self.press_position=position
-        self.master.after( Lockpin.light_time, self.btn_relise )
+        self.master.after( self.light_time, self.btn_relise )
         if label=="#":
             if self.pin==self.pin_active:
                 self.clear()
-                #self.pin=self.hostname
                 _unlock()
             else:
                 self.clear()
-                tah=""
-                #self.pin=self.hostname
         elif label=="*":
             self.clear()
             return
@@ -239,7 +221,7 @@ class Lockpin(Switchwindow):
         _tmp=""
         for n in self.pin:
             _tmp=_tmp+"*"
-        id = self.canvas.create_text( scrsize[0]/2,Lockpin.display_y_pos,text=_tmp,fill="#ffbf00", justify=tk.CENTER, tag="pintext",font=self.font)
+        id = self.canvas.create_text( scrsize[0]/2,self.display_y_pos,text=_tmp,fill=cnf.dml['lockpin']['display_color'], justify=tk.CENTER, tag="pintext",font=self.font)
 
     def btn_relise(self):
         label=self.press_tag.split("_",2)[1]
@@ -250,36 +232,31 @@ class Lockpin(Switchwindow):
 
 class Clock(Switchwindow):
     """ clock  """
-    global scrmode
+    global cnf,scrmode
     images = "images/"
-    baksnames = [ "z1b_gold_transparent.png","z1b_blue_transparent.png","z1b_green_transparent.png","z1b_red_transparent.png","z1b_transparent.png","z3b_gold_transparent.png","z3b_blue_transparent.png","z3b_green_transparent.png","z3b_red_transparent.png","z3b_purple_transparent.png","z3b_transparent.png" ]
+    #baksnames = [ "z1b_gold_transparent.png","z1b_blue_transparent.png","z1b_green_transparent.png","z1b_red_transparent.png","z1b_transparent.png","z3b_gold_transparent.png","z3b_blue_transparent.png","z3b_green_transparent.png","z3b_red_transparent.png","z3b_purple_transparent.png","z3b_transparent.png" ]
     backs = []
 
     def __init__(self,master,name):
-        global scrmode,scrsize
+        global cnf,scrmode,scrsize
         Switchwindow.__init__(self,master,name)
-        self.fbg="black"
-        self.bfg="#ff8000"
+        self.fbg=cnf.dml['clock']['frm_bg']
+        self.bfg=cnf.dml['clock']['btn_fg']
         self.face_names={"gold":"z1b_gold_transparent.png","blue":"z1b_blue_transparent.png","green":"z1b_green_transparent.png","red":"z1b_red_transparent.png","purple":"z1b_purple_transparent.png","black":"z1b_black_transparent.png"}
         self.bgimage_names={"gold":"mesh_gold_480x320.png","blue":"mesh_blue_480x320.png","green":"mesh_green_480x320.png","red":"mesh_red_480x320.png","purple":"mesh_purple_480x320.png","black":"mesh_black_480x320.png"}
         #bgimage_name="mesh_gold_480x320.png"
 
-        self.ind=5
-        self.ind1=0
-        self.ind2=0
-        self.s_color = (255,0,0,255)
-        self.m_color = (255,190,0,255)
-        self.h_color = (255,190,0,255)
-        self.outline_color = (255,170,0,255)
-        self.arrowsize = 15
-        self.symbol_M = 12
-        self.symbol_L = 16
-        self.symbol_XL = 24
-        self.ttf_XL = 24
-        self.ttf_L = 16
-        self.ttf_M = 12
-        self.ttf_S = 10
-        self.ttf_XS = 8
+        self.ind=cnf.dml['clock']['ind']
+        self.ind1=cnf.dml['clock']['ind1']
+        self.ind2=cnf.dml['clock']['ind2']
+        self.s_color = cnf.dml['clock']['s_color']
+        self.m_color = cnf.dml['clock']['m_color']
+        self.h_color = cnf.dml['clock']['h_color']
+        self.outline_color = cnf.dml['clock']['outline_color']
+        self.arrowsize = cnf.dml['clock']['arrowsize']
+        self.symbol_size = cnf.dml['clock']['symbol_size']
+        self.ttf_size = cnf.dml['clock']['ttf_size']
+        self.colck_y_ofset = cnf.dml['clock']['colck_y_ofset']
 
         self.face={}
         self.bgimage={}
@@ -288,18 +265,21 @@ class Clock(Switchwindow):
             self.face[n]=Image.open( Clock.images + self.face_names[n] ).resize((scrsize[1]-45,scrsize[1]-45),resample=Image.BICUBIC)
             self.bgimage[n]=Image.open( Clock.images + self.bgimage_names[n] ).resize((scrsize[0],scrsize[1]),resample=Image.BICUBIC)
         self.run_bgimage = ImageTk.PhotoImage(self.bgimage[ [*self.bgimage][self.ind2] ])
-        self.images['btn_next']= ImageTk.PhotoImage( Image.open( Clock.images + "btn_gold_50.png" ) )
+        img = Image.open( Clock.images + cnf.dml['clock']['btn_next_img'] )
+        img_r = img.rotate( 180, Image.BICUBIC )
+        self.images['btn_next']= ImageTk.PhotoImage( img )
+        self.images['btn_back']= ImageTk.PhotoImage( img_r )
 
-        self.fontXL = ImageFont.truetype("./fonts/tahomabd.ttf", self.ttf_XL)
-        self.fontL = ImageFont.truetype("./fonts/tahomabd.ttf", self.ttf_L)
-        self.fontM = ImageFont.truetype("./fonts/lucon.ttf", self.ttf_M)
-        self.symbolsL = ImageFont.truetype("./fonts/segmdl2.ttf", self.symbol_L)
-        self.symbolsXL = ImageFont.truetype("./fonts/segmdl2.ttf", self.symbol_XL)
+        self.fontXL = ImageFont.truetype("./fonts/tahomabd.ttf", self.ttf_size['XL'])
+        self.fontL = ImageFont.truetype("./fonts/tahomabd.ttf", self.ttf_size['XL'])
+        self.fontM = ImageFont.truetype("./fonts/lucon.ttf", self.ttf_size['M'])
+        self.symbolsL = ImageFont.truetype("./fonts/segmdl2.ttf", self.symbol_size['L'])
+        self.symbolsXL = ImageFont.truetype("./fonts/segmdl2.ttf", self.symbol_size['XL'])
 
         self.time=tk.StringVar()
         self.frame.config(bg=self.fbg)
         self.time.set(time.strftime('%-H:%M:%S'))
-        self.colck_y_ofset = 10
+
         self.canvas = tk.Canvas(self.frame,width=scrsize[0],height=scrsize[1],bg="black",bd=0, highlightthickness=0)
         self.canvas.pack(fill=tk.BOTH)
         self.drow_all()
@@ -312,7 +292,7 @@ class Clock(Switchwindow):
         self.canvas.delete("btn_next2")
         self.canvas.delete("bgphoto")
 
-        self.canvas.create_image( (scrsize[0]/2,scrsize[1]/2-20), image=self.run_bgimage, tag="bgphoto" )
+        self.canvas.create_image( (scrsize[0]/2,scrsize[1]/2-cnf.dml['topbar']['height']), image=self.run_bgimage, tag="bgphoto" )
         self.run_face=self.drowclock()
         self.canvas.create_image( (scrsize[0]/2,scrsize[1]/2-self.colck_y_ofset), image=self.run_face, tag="clock" )
         self.canvas.create_image( (scrsize[0]-30,scrsize[1]-60), image=self.images['btn_next'], tag="btn_next1" )
@@ -320,25 +300,57 @@ class Clock(Switchwindow):
         self.canvas.create_image( (scrsize[0]-30,scrsize[1]-120), image=self.images['btn_next'], tag="btn_next2" )
         self.canvas.tag_bind( "btn_next2", "<Button-1>", self.nextbg )
 
+        self.canvas.create_image( (30,scrsize[1]-60), image=self.images['btn_back'], tag="btn_back1" )
+        self.canvas.tag_bind( "btn_back1", "<Button-1>", self.backface )
+        self.canvas.create_image( (30,scrsize[1]-120), image=self.images['btn_back'], tag="btn_back2" )
+        self.canvas.tag_bind( "btn_back2", "<Button-1>", self.backbg )
+
+
 
     def nextface(self,event):
+        global cnf
         keys = [*self.face]
         if self.ind1 < len(self.face)-1:
             self.ind1=self.ind1+1;
         else:
             self.ind1 = 0;
+        cnf.dml['clock']['ind1']=self.ind1
+        cnf.save()
+
+    def backface(self,event):
+        global cnf
+        keys = [*self.face]
+        self.ind1=self.ind1-1;
+        if self.ind1 < 0:
+            self.ind1 = len(self.face)-1;
+        cnf.dml['clock']['ind1']=self.ind1
+        cnf.save()
+
 
     def nextbg(self,event):
         """  ???  """
+        global cnf
         keys = [*self.bgimage]
         if self.ind2 < len(self.bgimage)-1:
-            self.ind2=self.ind2+1;
+            self.ind2=self.ind2+1
         else:
             self.ind2 = 0;
+        cnf.dml['clock']['ind2']=self.ind2
         self.run_bgimage = ImageTk.PhotoImage( self.bgimage[ keys[self.ind2] ] )
         self.drow_all()
+        cnf.save()
 
-
+    def backbg(self,event):
+        """  ???  """
+        global cnf
+        keys = [*self.bgimage]
+        self.ind2=self.ind2-1
+        if self.ind2 < 0:
+            self.ind2 = len(self.bgimage)-1
+        cnf.dml['clock']['ind2']=self.ind2
+        self.run_bgimage = ImageTk.PhotoImage( self.bgimage[ keys[self.ind2] ] )
+        self.drow_all()
+        cnf.save()
 
     def drowclock(self):
         global scrmode,scrsize
@@ -361,7 +373,7 @@ class Clock(Switchwindow):
         else:
             font=self.fontXL
             symbols=self.symbolsXL
-            symbol_size=self.symbol_XL
+            symbol_size=self.symbol_size['XL']
         draw.text( (im.size[0]/2-symbol_size/2,im.size[1]/4), chr(0xE774)+u'', font=symbols, fill=iconcolor )
         temperature = hlp.getcputemp()+u"°C"
         tm_size = draw.textsize(temperature,font=font)
@@ -598,6 +610,7 @@ def _unlock(unlock=True):
 
 
 
+cnf=Conf.Appconfig("rpipanel.ini")
 np=None
 window = tk.Tk()
 scrsize=(window.winfo_screenwidth(),window.winfo_screenheight())
@@ -612,10 +625,12 @@ else:
    scrsize=(480,320)
 #   scrmode=0
 #   scrsize=(320,240)
+
+geometry="{}x{}+0+0".format(scrsize[0],scrsize[1])
 window.overrideredirect(True)
-window.geometry(scrtype[scrmode])
+window.geometry(geometry)
 window.config(bg="black")
-#window.geometry("480x320+0+0")
+
 
 lock_frame=tk.Frame(window,relief=tk.FLAT,borderwidth=0,bg="black",width=scrsize[0],height=scrsize[1])
 tb_frame=tk.Frame(window,relief=tk.FLAT,borderwidth=0,bg="black")
