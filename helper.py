@@ -90,3 +90,16 @@ def getallip(dev):
         else:
             continue
     return iplist
+
+def getmmcinfo():
+    w=system_exec("blkid -t TYPE=ext4 -o export")
+    r={}
+    for l in w:
+        _it=l.strip().split("=",2)
+        r[_it[0]] = _it[1]
+    w=system_exec("df -kH --type=ext4 --output=size,avail")
+    _tmp=w[1].strip()
+    r['size']=_tmp.split(" ")[0]
+    r['free']=_tmp[len(r['size']):].strip()
+    return r
+

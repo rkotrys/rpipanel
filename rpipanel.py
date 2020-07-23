@@ -435,7 +435,8 @@ class Systeminfo(Switchwindow):
         info4=""
         for d in dev:
             info4=info4+"{:<6} {:^16} {}\n".format( d[0],d[1], hlp.getip(d[0]).split("/",1)[0] )
-
+        mmcinfo=hlp.getmmcinfo()
+        info2 = info2 + "\nMMC: {}, {} free, PARTUUID: {}".format(mmcinfo['size'],mmcinfo['free'],mmcinfo['PARTUUID'])
         lbl=tk.Label(self.info_frame,text=info1,justify=tk.CENTER,anchor=tk.CENTER,font=(monofont,cnf.dml['systeminfo']['font_size']['name']),bg=cnf.dml['systeminfo']['frm_bg'], fg=cnf.dml['systeminfo']['lbl_name_fg'],pady=3 )
         lbl.pack(fill=tk.X)
         lbl=tk.Label(self.info_frame,text=info2,justify=tk.CENTER,anchor=tk.CENTER, font=(monofont,cnf.dml['global']['fonts_size'][scrmode]), bg=cnf.dml['systeminfo']['frm_bg'], fg=cnf.dml['systeminfo']['lbl_sys_fg'])
