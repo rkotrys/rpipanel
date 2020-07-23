@@ -81,9 +81,10 @@ class Shutdown(Switchwindow):
         bpady=cnf.dml['shutdown']['btn_pady']
         font=(cnf.dml['global']['font'], cnf.dml['shutdown']['btn_font_size'])
         padsize=cnf.dml['shutdown']['btn_pad']
+
+        master.config(bg=cnf.dml['shutdown']['frm_self_bg'])
         self.frame.config(bg=fbg)
 
-        master.config(bg=fbg)
         btn_frame=tk.Frame(self.frame,relief=tk.FLAT,borderwidth=0,bg=fbg,padx=padsize,pady=padsize)
         #btn_frame.pack(fill=tk.X)
         btn_frame.grid(row=0,column=0,padx=5,pady=5)
@@ -120,7 +121,6 @@ class Lockpin(Switchwindow):
     _keys_label4={"1":"btn_black_rect_1.png","2":"btn_black_rect_2.png","3":"btn_black_rect_3.png","4":"btn_black_rect_4.png",
                   "5":"btn_black_rect_5.png","6":"btn_black_rect_6.png","7":"btn_black_rect_7.png","8":"btn_black_rect_8.png",
                   "*":"btn_black_rect_asterix.png","9":"btn_black_rect_9.png","0":"btn_black_rect_0.png","#":"btn_black_rect_#.png" }
-    keys_label=_keys_label3
 
     keys_im = {}
     keys_im_press = {}
@@ -142,7 +142,7 @@ class Lockpin(Switchwindow):
         self.light_level = cnf.dml['lockpin']['lightlevel']
 
         if scrmode==0:
-            sekf.col_no=4
+            self.col_no=4
             self.y_start=cnf.dml['lockpin']['ystart'][scrmode]
             self.key_size_x = cnf.dml['lockpin']['keysize'][scrmode][0]
             self.key_size_y = cnf.dml['lockpin']['keysize'][scrmode][1]
@@ -158,8 +158,8 @@ class Lockpin(Switchwindow):
         self.x_start = int((scrsize[0]-self.key_size_x*self.col_no) / 2)
         self.y_start = int((scrsize[1]-self.key_size_y*len(self.keys_face)/self.col_no) / 2)+self.y_start
 
-        for f in Lockpin.keys_label:
-            img = Image.open( Lockpin.images+self.keys_label[f] ).resize((self.key_size_x,self.key_size_y),resample=Image.BICUBIC)
+        for f in self.keys_face:
+            img = Image.open( Lockpin.images+self.keys_face[f] ).resize((self.key_size_x,self.key_size_y),resample=Image.BICUBIC)
             enhancer = ImageEnhance.Brightness(img)
             Lockpin.keys_im[ f ] = ImageTk.PhotoImage(img)
             Lockpin.keys_im_press[ f ] = ImageTk.PhotoImage( enhancer.enhance(self.light_level) )
@@ -234,7 +234,6 @@ class Clock(Switchwindow):
     """ clock  """
     global cnf,scrmode
     images = "images/"
-    #baksnames = [ "z1b_gold_transparent.png","z1b_blue_transparent.png","z1b_green_transparent.png","z1b_red_transparent.png","z1b_transparent.png","z3b_gold_transparent.png","z3b_blue_transparent.png","z3b_green_transparent.png","z3b_red_transparent.png","z3b_purple_transparent.png","z3b_transparent.png" ]
     backs = []
 
     def __init__(self,master,name):
@@ -242,10 +241,8 @@ class Clock(Switchwindow):
         Switchwindow.__init__(self,master,name)
         self.fbg=cnf.dml['clock']['frm_bg']
         self.bfg=cnf.dml['clock']['btn_fg']
-        self.face_names={"gold":"z1b_gold_transparent.png","blue":"z1b_blue_transparent.png","green":"z1b_green_transparent.png","red":"z1b_red_transparent.png","purple":"z1b_purple_transparent.png","black":"z1b_black_transparent.png"}
-        self.bgimage_names={"gold":"mesh_gold_480x320.png","blue":"mesh_blue_480x320.png","green":"mesh_green_480x320.png","red":"mesh_red_480x320.png","purple":"mesh_purple_480x320.png","black":"mesh_black_480x320.png"}
-        #bgimage_name="mesh_gold_480x320.png"
-
+        self.face_names=cnf.dml['clock']['face_names']
+        self.bgimage_names=cnf.dml['clock']['bgimage_names']
         self.ind=cnf.dml['clock']['ind']
         self.ind1=cnf.dml['clock']['ind1']
         self.ind2=cnf.dml['clock']['ind2']
@@ -353,23 +350,19 @@ class Clock(Switchwindow):
         cnf.save()
 
     def drowclock(self):
-        global scrmode,scrsize
+        global cnf,scrmode,scrsize
         iconcolor = (225,180,0) #(200,200,255)
         tm = time.localtime()
         image = self.face[[*self.face][self.ind1]].copy()
         im = Image.new( "RGBA", image.size, (255,255,255,255) )
         im.paste(image)
         draw = ImageDraw.Draw(im)
-        if scrmode==0:
-            hands=(12,25,35)
-            self.arrowsize=10
-        else:
-            hands=(24,50,70)
-            self.arrowsize=15
+        hands=(cnf.dml['clock']['hands_size'][scrmode]['h'],cnf.dml['clock']['hands_size'][scrmode]['m'],cnf.dml['clock']['hands_size'][scrmode]['s'])
+        self.arrowsize=cnf.dml['clock']['arrowsize'][scrmode]
         if scrmode==0:
             font=self.fontL
             symbols=self.symbolsL
-            symbol_size=self.symbol_L
+            symbol_size=self.symbol_size['L']
         else:
             font=self.fontXL
             symbols=self.symbolsXL
@@ -397,9 +390,9 @@ class Clock(Switchwindow):
         hmim =Image.alpha_composite( him, im.rotate( -(360*t[1])/60, Image.BICUBIC ) )
         im = Image.new( "RGBA", image.size, (255,255,255,0) )
         dr = ImageDraw.Draw( im )
-        dr.line([ ( x, y+30 ), ( x, r[0]+10)], fill = self.s_color, width = 2 )
-        dr.line([ ( x-3, r[0]+10 ), ( x, r[0]), ( x+3, r[0]+10 ), ( x-3, r[0]+10 )], fill = self.s_color, width = 2 )
-        dr.ellipse([x-7,y-7,x+7,y+7],fill=self.s_color,outline='#777')
+        dr.line([ ( x, y+30 ), ( x, r[0]+10)], fill = self.s_color, width = 3 )
+        dr.line([ ( x-4, r[0]+10 ), ( x, r[0]), ( x+3, r[0]+10 ), ( x-3, r[0]+10 )], fill = self.s_color, width = 2 )
+        dr.ellipse([x-8,y-8,x+8,y+8],fill=self.s_color,outline='#777')
         return Image.alpha_composite( hmim, im.rotate( -(360*t[2])/60, Image.BICUBIC ) )
 
 
@@ -418,23 +411,19 @@ class Clock(Switchwindow):
 class Systeminfo(Switchwindow):
     """ system info  """
     def __init__(self,master,name):
-        global scrmode,scrsize,dfont
+        global cnf,scrmode,scrsize,dfont
         Switchwindow.__init__(self,master,name)
-        fbg = "black"
-        ffg = "#ffffff"
-        bfg = "darkred"
-        bbg = "#ffbf00"
-        monofont="DejaVu Sans Mono";
+        monofont=cnf.dml['global']['font']
         bpady=15
         padsize=5
         self.master=master
-        hi=hlp.hostinfo();
+        hi=hlp.hostinfo()
         dev=hi['dev']
         #print(hi)
         mt=int(hi['MemTotal'].split(" ",1)[0]) / 1000
         mf=int(hi['MemAvailable'].split(" ",1)[0]) / 1000
-        self.frame.config(bg=fbg)
-        self.info_frame = tk.Frame(self.frame,relief=tk.FLAT, bg=fbg)
+        self.frame.config(bg=cnf.dml['systeminfo']['frm_bg'])
+        self.info_frame = tk.Frame(self.frame,relief=tk.FLAT, bg=cnf.dml['systeminfo']['frm_bg'])
         #self.frame.pack_propagate(0) # don't shrink
         self.info_frame.place(relx=0.5, rely=0.5, anchor=tk.CENTER)
         info1 = hlp.readfile('/etc/hostname')
@@ -447,13 +436,13 @@ class Systeminfo(Switchwindow):
         for d in dev:
             info4=info4+"{:<6} {:^16} {}\n".format( d[0],d[1], hlp.getip(d[0]).split("/",1)[0] )
 
-        lbl=tk.Label(self.info_frame,text=info1,justify=tk.CENTER,anchor=tk.CENTER,font=(monofont,17),bg=fbg, fg=bbg,pady=3 )
+        lbl=tk.Label(self.info_frame,text=info1,justify=tk.CENTER,anchor=tk.CENTER,font=(monofont,cnf.dml['systeminfo']['font_size']['name']),bg=cnf.dml['systeminfo']['frm_bg'], fg=cnf.dml['systeminfo']['lbl_name_fg'],pady=3 )
         lbl.pack(fill=tk.X)
-        lbl=tk.Label(self.info_frame,text=info2,justify=tk.CENTER,anchor=tk.CENTER, font=(monofont,dfont[scrmode]), bg=fbg, fg=ffg)
+        lbl=tk.Label(self.info_frame,text=info2,justify=tk.CENTER,anchor=tk.CENTER, font=(monofont,cnf.dml['global']['fonts_size'][scrmode]), bg=cnf.dml['systeminfo']['frm_bg'], fg=cnf.dml['systeminfo']['lbl_sys_fg'])
         lbl.pack(fill=tk.X)
-        lbl=tk.Label(self.info_frame,text=info3,justify=tk.LEFT,anchor="nw", font=(monofont,dfont[scrmode]), bg=fbg, fg="#b0b0b0")
+        lbl=tk.Label(self.info_frame,text=info3,justify=tk.LEFT,anchor="nw", font=(monofont,cnf.dml['global']['fonts_size'][scrmode]), bg=cnf.dml['systeminfo']['frm_bg'], fg=cnf.dml['systeminfo']['lbl_title_fg'])
         lbl.pack(fill=tk.X)
-        self.lbl=tk.Label(self.info_frame,text=info4,justify=tk.LEFT,anchor="nw",font=(monofont,dfont[scrmode]), bg=fbg, fg=bbg)
+        self.lbl=tk.Label(self.info_frame,text=info4,justify=tk.LEFT,anchor="nw",font=(monofont,cnf.dml['global']['fonts_size'][scrmode]), bg=cnf.dml['systeminfo']['frm_bg'], fg=cnf.dml['systeminfo']['lbl_dev_fg'])
         self.lbl.pack(fill=tk.X)
         self.getnetworks()
 
