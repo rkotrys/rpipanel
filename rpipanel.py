@@ -264,8 +264,15 @@ class Clock(Switchwindow):
         self.run_bgimage = ImageTk.PhotoImage(self.bgimage[ [*self.bgimage][self.ind2] ])
         img = Image.open( Clock.images + cnf.dml['clock']['btn_next_img'] )
         img_r = img.rotate( 180, Image.BICUBIC )
-        self.images['btn_next']= ImageTk.PhotoImage( img )
-        self.images['btn_back']= ImageTk.PhotoImage( img_r )
+#        self.images['btn_next']= ImageTk.PhotoImage( img )
+#        self.images['btn_back']= ImageTk.PhotoImage( img_r )
+        self.images['btn_next']= btn_img_make(0xEE35, self.bfg )
+        self.images['btn_back']= btn_img_make(0xE248, self.bfg )
+        self.images['btn_gog']= btn_img_make(0xE115, self.bfg )
+        self.images['btn_lockpad']= btn_img_make(0xE1F6, self.bfg )
+        self.images['btn_sys']= btn_img_make(0xE950, self.bfg )
+        self.images['btn_ip']= btn_img_make(0xE8CE, self.bfg )
+        self.images['btn_quit']= btn_img_make(0xE7E8, self.bfg )
 
         self.fontXL = ImageFont.truetype("./fonts/tahomabd.ttf", self.ttf_size['XL'])
         self.fontL = ImageFont.truetype("./fonts/tahomabd.ttf", self.ttf_size['XL'])
@@ -284,23 +291,34 @@ class Clock(Switchwindow):
         self.settime()
 
     def drow_all(self):
+        global panel_frame
         self.canvas.delete("clock")
         self.canvas.delete("btn_next1")
         self.canvas.delete("btn_next2")
+        self.canvas.delete("btn_back1")
+        self.canvas.delete("btn_back2")
         self.canvas.delete("bgphoto")
 
         self.canvas.create_image( (scrsize[0]/2,scrsize[1]/2-cnf.dml['topbar']['height']), image=self.run_bgimage, tag="bgphoto" )
         self.run_face=self.drowclock()
         self.canvas.create_image( (scrsize[0]/2,scrsize[1]/2-self.colck_y_ofset), image=self.run_face, tag="clock" )
-        self.canvas.create_image( (scrsize[0]-30,scrsize[1]-60), image=self.images['btn_next'], tag="btn_next1" )
+        self.canvas.create_image( (scrsize[0]-30,scrsize[1]-50), image=self.images['btn_next'], tag="btn_next1" )
         self.canvas.tag_bind( "btn_next1", "<Button-1>", self.nextface )
-        self.canvas.create_image( (scrsize[0]-30,scrsize[1]-120), image=self.images['btn_next'], tag="btn_next2" )
+        self.canvas.create_image( (scrsize[0]-30,scrsize[1]-100), image=self.images['btn_next'], tag="btn_next2" )
         self.canvas.tag_bind( "btn_next2", "<Button-1>", self.nextbg )
+        self.canvas.create_image( (scrsize[0]-30,scrsize[1]-150), image=self.images['btn_sys'], tag="btn_sys" )
+        self.canvas.tag_bind( "btn_sys", "<Button-1>", partial(_framereplace,"i",panel_frame,Systeminfo) )
+        self.canvas.create_image( (scrsize[0]-30,scrsize[1]-200), image=self.images['btn_quit'], tag="btn_quit" )
+        self.canvas.tag_bind( "btn_quit", "<Button-1>", partial(_framereplace,"quit",panel_frame,Shutdown) )
 
-        self.canvas.create_image( (30,scrsize[1]-60), image=self.images['btn_back'], tag="btn_back1" )
+        self.canvas.create_image( (30,scrsize[1]-50), image=self.images['btn_back'], tag="btn_back1" )
         self.canvas.tag_bind( "btn_back1", "<Button-1>", self.backface )
-        self.canvas.create_image( (30,scrsize[1]-120), image=self.images['btn_back'], tag="btn_back2" )
+        self.canvas.create_image( (30,scrsize[1]-100), image=self.images['btn_back'], tag="btn_back2" )
         self.canvas.tag_bind( "btn_back2", "<Button-1>", self.backbg )
+        self.canvas.create_image( (30,scrsize[1]-150), image=self.images['btn_ip'], tag="btn_ip" )
+        self.canvas.tag_bind( "btn_ip", "<Button-1>", partial(_framereplace,"ip",panel_frame,Ipconfig) )
+        self.canvas.create_image( (30,scrsize[1]-200), image=self.images['btn_lockpad'], tag="btn_lockpad" )
+        self.canvas.tag_bind( "btn_lockpad", "<Button-1>", partial(_unlock,False) )
 
 
 
@@ -511,7 +529,6 @@ class Ipconfig(Switchwindow):
             lbl=tk.Label(frm_dev,text="{}: {} ".format(dev,mac), font=lbl_font,bg=lbg,fg=lfg,padx=lbl_padx,pady=lbl_pady )
             lbl.pack(side=tk.LEFT)
 
-
             btn=tk.Button(frm_dev,text="RM",command=partial(self.updown_btn,dev,"RM"), font=btn_font,bg=bbg,fg=cnf.dml["config"]["lbl_color"]["fg_red"],padx=btn_padx,pady=btn_pady,width=4)
             btn.pack(side=tk.RIGHT)
             if( dev.find(".") )<0:
@@ -639,39 +656,65 @@ class Ipconfig(Switchwindow):
 
 
 
-def _framereplace(x,top_frame,Cframe):
-    global np
-    if np != None:
-        if np.name() == x:
-            _replace=False
-        else:
-            _replace=True
-        np.destroy()
-        if _replace:
-            np=Cframe(top_frame,x)
-        else:
-            np=Clock(top_frame,"clock")
-    else:
-        np = Cframe(top_frame,x)
+def _framereplace(x,top_frame,Cframe,event=None):
+    global np,clock_frame,tb_frame,panel_frame
+    clock_frame.pack_forget()
+    tb_frame.pack(fill=tk.X)
+    panel_frame.pack(fill=tk.BOTH)
+    np=Cframe(top_frame,x)
 
 
 def test(x):
     print("test: " + x)
 
-def _unlock(unlock=True):
-    global tb_frame,panel_frame,lock_frame,lock
+def _unlock(unlock=True,event=None):
+    global clock_frame,tb_frame,panel_frame,lock_frame,lock
     if unlock:
         lock_frame.pack_forget()
-        tb_frame.pack(fill=tk.X)
-        panel_frame.pack(fill=tk.BOTH)
-        _framereplace("clock",panel_frame,Clock)
+        clock_frame.pack(fill=tk.BOTH)
+        _clock()
     else:
         tb_frame.pack_forget()
         panel_frame.pack_forget()
+        clock_frame.pack_forget()
         lock.clear()
         lock_frame.pack(fill=tk.BOTH)
 
+def _clock(event=None):
+    global panel_frame,tb_frame,clock_frame
+    panel_frame.pack_forget()
+    tb_frame.pack_forget()
+    clock_frame.pack(fill=tk.BOTH)
 
+
+
+def photo_make( label, size=20, bg="#ffffffff", fg="#00000000" ):
+    global cnf
+    im = Image.new( "RGBA", (size,size), bg )
+    font =  ImageFont.truetype( cnf.dml["global"]["fonts"]+"segmdl2.ttf", size-2 )
+    label_str = chr(label)+u""
+    draw = ImageDraw.Draw(im)
+    draw.text( (1,1), text=label_str, font=font,fill=fg )
+    im.save("test.png","PNG")
+    return ImageTk.PhotoImage(im)
+
+
+def btn_img_make(label, fg, fname="btn_gold_black_50.png", size=(50,50)):
+    global cnf,scrmode,scrsize
+    img_bg = Image.open( cnf.dml["global"]["images"] + fname )
+    font_size = 28
+    if img_bg.size!=size:
+        img_bg = img_bg.resize(size,resample=Image.BICUBIC)
+    font =  ImageFont.truetype( cnf.dml["global"]["fonts"]+"segmdl2.ttf", font_size )
+
+    label_str = chr(label)+u""
+    draw = ImageDraw.Draw(img_bg)
+    label_size = draw.textsize(label_str,font=font)
+    t_place = ( int((img_bg.size[0]-label_size[0])/2), int((img_bg.size[0]-label_size[0])/2) )
+    #t_place=( 0,0 )
+    draw.text( t_place, text=label_str, font=font, fill=fg )
+#    img_bg.save("test.png","PNG")
+    return ImageTk.PhotoImage(img_bg)
 
 cnf=Conf.Appconfig("rpipanel.ini")
 np=None
@@ -696,20 +739,22 @@ window.config(bg="black")
 
 
 lock_frame=tk.Frame(window,relief=tk.FLAT,borderwidth=0,bg="black",width=scrsize[0],height=scrsize[1])
+clock_frame=tk.Frame(window,relief=tk.FLAT,borderwidth=0,bg="black",width=scrsize[0],height=scrsize[1])
 tb_frame=tk.Frame(window,relief=tk.FLAT,borderwidth=0,bg="black")
 panel_frame=tk.Frame(window,relief=tk.FLAT,borderwidth=0,bg="black",height=scrsize[1])
 
 #tb_frame.pack(fill=tk.X)
 #panel_frame.pack(fill=tk.BOTH)
 
-buttons = [ ["QUIT",partial(_framereplace,"QUIT",panel_frame,Shutdown)],
-            ["IP",partial(_framereplace,"IP",panel_frame,Ipconfig)],
-            ["i",partial(_framereplace,"i",panel_frame,Systeminfo)],
-            ["LOK",partial(_unlock,False) ] ]
+#buttons = [ ["QUIT",partial(_framereplace,"QUIT",panel_frame,Shutdown)],
+#            ["IP",partial(_framereplace,"IP",panel_frame,Ipconfig)],
+#            ["i",partial(_framereplace,"i",panel_frame,Systeminfo)],
+#            ["LOK",partial(_unlock,False) ] ]
+buttons = [ ["BACK",_clock] ]
 
 tb=Topbar(tb_frame,u"",buttons)
 
-#np = Clock(panel_frame,"clock")
+clock = Clock(clock_frame,"clock")
 lock = Lockpin( lock_frame, "LOC" )
 lock_frame.pack(fill=tk.BOTH)
 
