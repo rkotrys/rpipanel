@@ -470,10 +470,24 @@ class Ipconfig(Switchwindow):
 
 
     def drowpanel(self):
-        global scrmode,scrsize,dfont
-        bfg = "black"
-        bbg = "#c0c0c0"
-        bpady=3
+        global cnf,scrmode,scrsize,dfont
+        fbg = cnf.dml["config"]["frm_bg"]
+        frm_padx = cnf.dml["config"]["frm_pad"]["x"]
+        frm_pady = cnf.dml["config"]["frm_pad"]["y"]
+
+        btn_font = (cnf.dml["config"]["lbl_font"], cnf.dml["global"]["fonts_size"][scrmode])
+        bfg = cnf.dml["config"]["btn_color"]["fg"]
+        bfg_red = cnf.dml["config"]["btn_color"]["fg_red"]
+        bfg_green = cnf.dml["config"]["btn_color"]["fg_green"]
+        bbg = cnf.dml["config"]["btn_color"]["bg"]
+        btn_padx = cnf.dml["config"]["btn_pad"]["x"]
+        btn_pady = cnf.dml["config"]["btn_pad"]["y"]
+
+        lbl_font = (cnf.dml["config"]["btn_font"], cnf.dml["global"]["fonts_size"][scrmode]-1)
+        lbg = cnf.dml["config"]["lbl_color"]["bg"]
+        lfg = cnf.dml["config"]["lbl_color"]["fg"]
+        lbl_padx = cnf.dml["config"]["lbl_pad"]["x"]
+        lbl_pady = cnf.dml["config"]["lbl_pad"]["y"]
 
         hi=hlp.hostinfo();
         self.dev=hi['dev']
@@ -482,39 +496,57 @@ class Ipconfig(Switchwindow):
         mask={}
         self.frames=[]
         for d in self.dev:
-            frm = tk.Frame(self.frame, padx=0, pady=4, borderwidth=1, relief=tk.RIDGE, width=self.width)
+            frm = tk.Frame(self.frame, bg=fbg,padx=frm_padx,pady=frm_padx,borderwidth=1, relief=tk.RIDGE, width=self.width)
             frm.pack(fill=tk.X)
             self.frames.append(frm)
             dev=d[0]
             mac=d[1]
             ip[no]=tk.StringVar()
             mask[no]=tk.StringVar()
+
             link=self.linkstate(self)
-            lbl=tk.Label(frm,text="DEV: {}, MAC: {}".format(dev,mac) )
-            lbl.pack(fill=tk.X)
+
+            frm_dev=tk.Frame(frm, bg=fbg,padx=frm_padx,pady=frm_padx,borderwidth=0,relief=tk.FLAT,width=self.width)
+            frm_dev.pack(fill=tk.X)
+            lbl=tk.Label(frm_dev,text="{}: {} ".format(dev,mac), font=lbl_font,bg=lbg,fg=lfg,padx=lbl_padx,pady=lbl_pady )
+            lbl.pack(side=tk.LEFT)
+
+
+            btn=tk.Button(frm_dev,text="RM",command=partial(self.updown_btn,dev,"RM"), font=btn_font,bg=bbg,fg=cnf.dml["config"]["lbl_color"]["fg_red"],padx=btn_padx,pady=btn_pady,width=4)
+            btn.pack(side=tk.RIGHT)
+            if( dev.find(".") )<0:
+                btn=tk.Button(frm_dev,text="+VLN",command=partial(self.vlanadd_btn,dev), font=btn_font,bg=bbg,fg=bfg,padx=btn_padx,pady=btn_pady,width=4)
+                btn.pack(side=tk.RIGHT)
+            btn=tk.Button(frm_dev,text="+IP",command=partial(self.addip,dev), font=btn_font,bg=bbg,fg=bfg,padx=btn_padx,pady=btn_pady,width=4)
+            btn.pack(side=tk.RIGHT)
+            if link[d[0]]=='UP':
+                _state="U"
+                _bfg=cnf.dml["config"]["lbl_color"]["fg_green"]
+            else:
+                _state="D"
+                _bfg=cnf.dml["config"]["lbl_color"]["fg_red"]
+            btn=tk.Button(frm_dev,text=_state,command=partial(self.updown_btn,dev,_state), font=btn_font,bg=bbg,fg=_bfg,padx=btn_padx,pady=btn_pady,width=4)
+            btn.pack(side=tk.RIGHT)
+
+
             allip=hlp.getallip(dev)
             if len(allip)>0:
                 for _ip in allip:
-                    ip[no].set(_ip.split("/",2)[0])
-                    mask[no].set(_ip.split("/",2)[1])
-                    frm_ip=tk.Frame(frm, padx=0, pady=1, borderwidth=1, relief=tk.FLAT, width=self.width)
+                    ip[no].set(_ip)
+                    frm_ip=tk.Frame(frm, bg=fbg,padx=frm_padx,pady=frm_padx,borderwidth=0,relief=tk.FLAT,width=self.width)
                     frm_ip.pack(fill=tk.X)
-                    lbl=tk.Label(frm_ip,text="IP" ).pack(side=tk.LEFT)
-                    btn=tk.Button(frm_ip,textvariable=ip[no],command=partial(self.setip, ip[no]),font=(self.monofont, dfont[scrmode]),fg=self.bfg,bg=self.bbg,padx=self.bpadx,pady=self.bpady,width=15)
-                    btn.pack(side=tk.LEFT)
-                    lbl=tk.Label(frm_ip,text="/" ).pack(side=tk.LEFT)
-                    btn=tk.Button(frm_ip,textvariable=mask[no],command=partial(self.setmask, mask[no]),font=(self.monofont, dfont[scrmode]),fg=self.bfg,bg=self.bbg,padx=self.bpadx,pady=self.bpady,width=3)
+                    lbl=tk.Label(frm_ip,text="IP ",font=lbl_font,bg=lbg,fg=lfg,padx=lbl_padx,pady=lbl_pady )
+                    lbl.pack(side=tk.LEFT)
+                    btn=tk.Button(frm_ip,textvariable=ip[no],command=partial(self.setip, ip[no]),font=btn_font,bg=bbg,fg=bfg,padx=btn_padx,pady=btn_pady,width=18)
                     btn.pack(side=tk.LEFT)
                     if link[d[0]]=='UP':
-                        lbl=tk.Label(frm_ip,text=link[d[0]],padx=3,fg="green").pack(side=tk.LEFT)
-                        btn=tk.Button(frm_ip,text="SET",command=partial(self.ipset,d[0],ip[no],mask[no]),font=(self.monofont, dfont[scrmode]),fg="red",bg=self.bbg,padx=self.bpadx,pady=self.bpady,width=3)
-                        btn.pack(side=tk.LEFT)
-                        btn=tk.Button(frm_ip,text="AD",command=partial(self.ipset,d[0],ip[no],mask[no],"add"),font=(self.monofont, dfont[scrmode]),fg="red",bg=self.bbg,padx=self.bpadx,pady=self.bpady,width=3)
-                        btn.pack(side=tk.LEFT)
-                        btn=tk.Button(frm_ip,text="RM",command=partial(self.ipset,d[0],ip[no],mask[no],"delete"),font=(self.monofont, dfont[scrmode]),fg="red",bg=self.bbg,padx=self.bpadx,pady=self.bpady,width=3)
-                        btn.pack(side=tk.LEFT)
+
+                        btn=tk.Button(frm_ip,text="RM",command=partial(self.ipset,d[0],ip[no],"delete"),font=btn_font,bg=bbg,fg=bfg_red,padx=btn_padx,pady=btn_pady,width=4)
+                        btn.pack(side=tk.RIGHT)
+                        btn=tk.Button(frm_ip,text="SET",command=partial(self.ipset,d[0],ip[no]),font=btn_font,bg=bbg,fg=bfg,padx=btn_padx,pady=btn_pady,width=4)
+                        btn.pack(side=tk.RIGHT)
                     else:
-                        lbl=tk.Label(frm_ip,text=link[d[0]],padx=3,fg="red").pack(side=tk.LEFT)
+                        lbl=tk.Label(frm_ip,text=link[d[0]],padx=3,fg="red").pack(side=tk.RIGHT)
                     no=no+1
                     ip[no]=tk.StringVar()
                     mask[no]=tk.StringVar()
@@ -524,19 +556,27 @@ class Ipconfig(Switchwindow):
                 no=no+1
                 ip[no]=tk.StringVar()
                 mask[no]=tk.StringVar()
+            if( dev.find(".") )==0:
+                frm_vlan=tk.Frame(self.frame, bg=fbg,padx=frm_padx,pady=frm_padx,borderwidth=0,relief=tk.FLAT,width=self.width)
+                frm_vlan.pack(fill=tk.X)
+                self.frames.append(frm_vlan)
+                btn=tk.Button(frm_vlan,text="Add VLAN Interface",command=partial(self.vlanadd_btn,dev), font=btn_font,bg=bbg,fg=bfg,padx=btn_padx,pady=btn_pady)
+                btn.pack(side=tk.TOP)
 
 
-    def ipset(self, dev, ip, mask,mode="replace"):
+    def ipset(self, dev, ip, mode="replace"):
         if mode=="replace":
-            oldip=hlp.getip(dev).split("/")[0]
-            oldmask=hlp.getip(dev).split("/")[1]
-            cmd="sudo ip a del {}/{} dev {}".format( oldip, oldmask, dev )
+            oldip=hlp.getip(dev)
+            cmd="sudo ip a del {} dev {}".format( oldip, dev )
             hlp.system_exec(cmd)
-        if mode=="delete":
-            cmd="sudo ip a del {}/{} dev {}".format( ip.get(), mask.get(), dev )
+        elif mode=="delete":
+            cmd="sudo ip a del {} dev {}".format( ip.get(), dev )
             hlp.system_exec(cmd)
-        if mode != "delete":
-            cmd="sudo ip a add {}/{} dev {}".format( ip.get(), mask.get(), dev )
+        elif mode=="add":
+            cmd="sudo ip a add {} dev {}".format( ip, dev )
+            hlp.system_exec(cmd)
+        elif mode != "delete":
+            cmd="sudo ip a add {} dev {}".format( ip.get(), dev )
             hlp.system_exec(cmd)
         for f in self.frames:
             f.destroy()
@@ -553,6 +593,8 @@ class Ipconfig(Switchwindow):
             parts=l.split(": ",3)
             if parts[1]=='lo':
                 continue
+            if parts[1].find("@") > 1:
+                parts[1]=parts[1][:parts[1].find("@")]
             if parts[2].find(" state UP ")>1:
                 link[parts[1]]="UP"
             else:
@@ -562,8 +604,39 @@ class Ipconfig(Switchwindow):
     def setip(self,ip):
         self.dialog=vk.Numpad(self.frame, ip.set, ip.get())
 
-    def setmask(self,mask):
-        self.dialog=vk.Numpad(self.frame, mask.set, mask.get())
+    def addip(self,dev):
+        self.curent_dev = dev
+        #self.curent_ip=tk.StringVar()
+        self.dialog=vk.Numpad(self.frame, lambda value: self.ipset(self.curent_dev,value,"add"), "192.168.1.100/24")
+
+    def vlanadd_btn(self,dev):
+        self.curent_dev = dev
+        self.dialog=vk.Numpad(self.frame, self.vlanadd, "2")
+
+    def vlanadd(self,name):
+        cmd="sudo ip link add link {} name {}.{} type vlan id {}".format( self.curent_dev, self.curent_dev, name, name )
+        hlp.system_exec(cmd)
+        for f in self.frames:
+            f.destroy()
+        self.frames=[]
+        self.drowpanel()
+
+    def updown_btn(self,dev,state):
+        if state=="U":
+            cmd="sudo ip link set {} down".format(dev)
+        elif state=="D":
+            cmd="sudo ip link set {} up".format(dev)
+        else:
+            if dev.find(".")>0:
+                cmd="sudo ip link delete {}".format(dev)
+            else:
+                return
+        hlp.system_exec(cmd)
+        for f in self.frames:
+            f.destroy()
+        self.frames=[]
+        self.drowpanel()
+
 
 
 def _framereplace(x,top_frame,Cframe):
@@ -611,10 +684,10 @@ elif scrsize[0]==480:
     scrmode=1
     scrsize=(480,320)
 else:
-   scrmode=1
-   scrsize=(480,320)
-#   scrmode=0
-#   scrsize=(320,240)
+#   scrmode=1
+#   scrsize=(480,320)
+   scrmode=0
+   scrsize=(320,240)
 
 geometry="{}x{}+0+0".format(scrsize[0],scrsize[1])
 window.overrideredirect(True)
