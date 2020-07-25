@@ -103,3 +103,32 @@ def getmmcinfo():
     r['free']=_tmp[len(r['size']):].strip()
     return r
 
+class RingBuffer:
+    def __init__(self,items):
+        self.data = items
+
+    def __str__(self):
+        r="[ "
+        for n in self.data:
+            r = r + "{} ".format(n)
+        return r + "]"
+
+    def get(self):
+        return self.data[0]
+
+    def next(self):
+        self.data.append(self.data.pop(0))
+        return self.data[0]
+
+    def add(self,item):
+        self.data.append(item)
+
+    def remove(self,item=None):
+        if item != None:
+            try:
+                self.data.remove(item)
+            except ValueError:
+                pass
+        else:
+            self.data.pop()
+

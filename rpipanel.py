@@ -16,15 +16,11 @@ import threading
 import configparser as cnfp
 import json
 
-dfont=[9,12]
-
 class Topbar:
     """ simple top bar with buttons  """
-    def __init__(self,master,label_text,buttons):
+    def __init__(self,master,label_text,buttons,frm=None,state=None):
         global cnf,scrsize,scrmode
         self.master=master
-        maxwidth=scrsize[0]
-        maxheight=scrsize[1]
         font=( cnf.dml['topbar']['font'], cnf.dml['global']['fonts_size'][scrmode])
         self.frame = tk.Frame(master,relief=tk.FLAT,borderwidth=1,bg=cnf.dml['topbar']['bar_bg'],height=cnf.dml['topbar']['height'])
         self.frame.pack_propagate(0) # don't shrink
@@ -71,7 +67,7 @@ class Switchwindow:
 
 class Shutdown(Switchwindow):
     """ shutdown & reload  """
-    def __init__(self,master,name):
+    def __init__(self,master,name,frm=None,state=None):
         global cnf
         Switchwindow.__init__(self,master,name)
 
@@ -126,9 +122,11 @@ class Lockpin(Switchwindow):
     keys_im_press = {}
     hi = {}
 
-    def __init__(self,master,name):
+    def __init__(self,master,name, frm=None,state=None):
         global cnf,scrmode,scrsize
         Switchwindow.__init__(self,master,name)
+        self.frm = frm
+        self.state = state
         self.frame.config(height=scrsize[1])
         self.hostname=hlp.readfile("/etc/hostname")
         Lockpin.hi=hlp.hostinfo();
@@ -236,20 +234,19 @@ class Clock(Switchwindow):
     images = "images/"
     backs = []
 
-    def __init__(self,master,name):
+    def __init__(self,master,name,frm=None,state=None):
         global cnf,scrmode,scrsize
         Switchwindow.__init__(self,master,name)
         self.fbg=cnf.dml['clock']['frm_bg']
         self.bfg=cnf.dml['clock']['btn_fg']
         self.face_names=cnf.dml['clock']['face_names']
-        self.bgimage_names=cnf.dml['clock']['bgimage_names']
-        self.ind=cnf.dml['clock']['ind']
+        self.bgimage_names=cnf.dml['global']['bgimage_names']
         self.ind1=cnf.dml['clock']['ind1']
         self.ind2=cnf.dml['clock']['ind2']
-        self.s_color = cnf.dml['clock']['s_color']
-        self.m_color = cnf.dml['clock']['m_color']
-        self.h_color = cnf.dml['clock']['h_color']
-        self.outline_color = cnf.dml['clock']['outline_color']
+        self.s_color = cnf.dml["clock"]["colors"]["s_hand"]
+        self.m_color = cnf.dml["clock"]["colors"]["m_hand"]
+        self.h_color = cnf.dml["clock"]["colors"]["h_hand"]
+        self.outline_color = cnf.dml["clock"]["colors"]["outline_hand"]
         self.arrowsize = cnf.dml['clock']['arrowsize']
         self.symbol_size = cnf.dml['clock']['symbol_size']
         self.ttf_size = cnf.dml['clock']['ttf_size']
@@ -259,10 +256,10 @@ class Clock(Switchwindow):
         self.bgimage={}
         self.images = {}
         for n in self.face_names:
-            self.face[n]=Image.open( Clock.images + self.face_names[n] ).resize((scrsize[1]-45,scrsize[1]-45),resample=Image.BICUBIC)
-            self.bgimage[n]=Image.open( Clock.images + self.bgimage_names[n] ).resize((scrsize[0],scrsize[1]),resample=Image.BICUBIC)
+            self.face[n]=Image.open( cnf.dml["global"]["images"] + self.face_names[n] ).resize((scrsize[1]-45,scrsize[1]-45),resample=Image.BICUBIC)
+            self.bgimage[n]=Image.open( cnf.dml["global"]["images"] + self.bgimage_names[n] ).resize((scrsize[0],scrsize[1]),resample=Image.BICUBIC)
         self.run_bgimage = ImageTk.PhotoImage(self.bgimage[ [*self.bgimage][self.ind2] ])
-        img = Image.open( Clock.images + cnf.dml['clock']['btn_next_img'] )
+        img = Image.open( cnf.dml["global"]["images"] + cnf.dml['clock']['btn_next_img'] )
         img_r = img.rotate( 180, Image.BICUBIC )
 #        self.images['btn_next']= ImageTk.PhotoImage( img )
 #        self.images['btn_back']= ImageTk.PhotoImage( img_r )
@@ -286,11 +283,11 @@ class Clock(Switchwindow):
 
         self.canvas = tk.Canvas(self.frame,width=scrsize[0],height=scrsize[1],bg="black",bd=0, highlightthickness=0)
         self.canvas.pack(fill=tk.BOTH)
-        self.drow_all()
+        self.drow_all(frm)
 
         self.settime()
 
-    def drow_all(self):
+    def drow_all(self, frm):
         global panel_frame
         self.canvas.delete("clock")
         self.canvas.delete("btn_next1")
@@ -303,23 +300,42 @@ class Clock(Switchwindow):
         self.run_face=self.drowclock()
         self.canvas.create_image( (scrsize[0]/2,scrsize[1]/2-self.colck_y_ofset), image=self.run_face, tag="clock" )
         self.canvas.create_image( (scrsize[0]-30,scrsize[1]-50), image=self.images['btn_next'], tag="btn_next1" )
-        self.canvas.tag_bind( "btn_next1", "<Button-1>", self.nextface )
+        self.canvas.tag_bind( "btn_next1", "<Button-1>", self.nexttheme )
         self.canvas.create_image( (scrsize[0]-30,scrsize[1]-100), image=self.images['btn_next'], tag="btn_next2" )
         self.canvas.tag_bind( "btn_next2", "<Button-1>", self.nextbg )
         self.canvas.create_image( (scrsize[0]-30,scrsize[1]-150), image=self.images['btn_sys'], tag="btn_sys" )
-        self.canvas.tag_bind( "btn_sys", "<Button-1>", partial(_framereplace,"i",panel_frame,Systeminfo) )
+        self.canvas.tag_bind( "btn_sys", "<Button-1>", partial(_framereplace,"i", frm["panel"], Systeminfo) )
         self.canvas.create_image( (scrsize[0]-30,scrsize[1]-200), image=self.images['btn_quit'], tag="btn_quit" )
-        self.canvas.tag_bind( "btn_quit", "<Button-1>", partial(_framereplace,"quit",panel_frame,Shutdown) )
+        self.canvas.tag_bind( "btn_quit", "<Button-1>", partial(_framereplace,"quit",frm["panel"],Shutdown) )
 
         self.canvas.create_image( (30,scrsize[1]-50), image=self.images['btn_back'], tag="btn_back1" )
         self.canvas.tag_bind( "btn_back1", "<Button-1>", self.backface )
         self.canvas.create_image( (30,scrsize[1]-100), image=self.images['btn_back'], tag="btn_back2" )
         self.canvas.tag_bind( "btn_back2", "<Button-1>", self.backbg )
         self.canvas.create_image( (30,scrsize[1]-150), image=self.images['btn_ip'], tag="btn_ip" )
-        self.canvas.tag_bind( "btn_ip", "<Button-1>", partial(_framereplace,"ip",panel_frame,Ipconfig) )
+        self.canvas.tag_bind( "btn_ip", "<Button-1>", partial(_framereplace,"ip",frm["panel"],Ipconfig) )
         self.canvas.create_image( (30,scrsize[1]-200), image=self.images['btn_lockpad'], tag="btn_lockpad" )
         self.canvas.tag_bind( "btn_lockpad", "<Button-1>", partial(_unlock,False) )
 
+
+    def nexttheme(self,event):
+        global cnf
+        print(cnf.dml["global"]["theme"])
+        keys = [*cnf.dml["global"]["bgimage_names"]]
+        print(keys)
+        for k in range(0,len(keys)):
+            print("k:{} - keys[k]:{} - theme:{}".format(k, keys[k], cnf.dml["global"]["theme"] ) )
+            if keys[k]==cnf.dml["global"]["theme"]:
+                print( "!! {}, {}".format(k, keys[k]) )
+                if k == len(keys)-1:
+                    cnf.dml["global"]["theme"] = keys[0]
+                    print("xxx {}".format(cnf.dml["global"]["theme"]))
+                else:
+                    cnf.dml["global"]["theme"] = keys[k+1]
+                    print("yyy {}".format(cnf.dml["global"]["theme"]))
+                break
+        print(cnf.dml["global"]["theme"])
+        cnf.save()
 
 
     def nextface(self,event):
@@ -369,13 +385,14 @@ class Clock(Switchwindow):
 
     def drowclock(self):
         global cnf,scrmode,scrsize
-        iconcolor = (225,180,0) #(200,200,255)
+        iconcolor = cnf.dml["clock"]["colors"]["icon"]
+        termcolor = cnf.dml["clock"]["colors"]["term"]
         tm = time.localtime()
         image = self.face[[*self.face][self.ind1]].copy()
         im = Image.new( "RGBA", image.size, (255,255,255,255) )
         im.paste(image)
         draw = ImageDraw.Draw(im)
-        hands=(cnf.dml['clock']['hands_size'][scrmode]['h'],cnf.dml['clock']['hands_size'][scrmode]['m'],cnf.dml['clock']['hands_size'][scrmode]['s'])
+        hands=( cnf.dml['clock']['hands_size'][scrmode]['s'], cnf.dml['clock']['hands_size'][scrmode]['m'], cnf.dml['clock']['hands_size'][scrmode]['h'])
         self.arrowsize=cnf.dml['clock']['arrowsize'][scrmode]
         if scrmode==0:
             font=self.fontL
@@ -388,7 +405,7 @@ class Clock(Switchwindow):
         draw.text( (im.size[0]/2-symbol_size/2,im.size[1]/4), chr(0xE774)+u'', font=symbols, fill=iconcolor )
         temperature = hlp.getcputemp()+u"°C"
         tm_size = draw.textsize(temperature,font=font)
-        draw.text( (int(im.size[0]/2-tm_size[0]/2+5), int(im.size[1]*2/3-tm_size[1]/2) ), temperature, font=font, fill=iconcolor )
+        draw.text( (int(im.size[0]/2-tm_size[0]/2+5), int(im.size[1]*2/3-tm_size[1]/2) ), temperature, font=font, fill=termcolor )
         im = Image.alpha_composite( im, self.drawhands( (tm[3],tm[4],tm[5]), hands, image ) )
         return ImageTk.PhotoImage(im)
 
@@ -399,13 +416,16 @@ class Clock(Switchwindow):
         y = int(image.size[1]/2)
         im = Image.new( "RGBA", image.size, (255,255,255,0) )
         dr = ImageDraw.Draw( im )
+        # H
         dr.polygon( [(x-3,y), (x+3,y), (x+3,r[2]), (x+6,r[2]),(x,r[2]-self.arrowsize),(x-6,r[2]),(x-3,r[2])], fill=self.h_color, outline=self.outline_color )
         h = t[0] if t[0]<13 else t[0]-12
         him = im.rotate( -(h*30+t[1]*0.5), Image.BICUBIC )
+        # M
         im = Image.new( "RGBA", image.size, (255,255,255,0) )
         dr = ImageDraw.Draw( im )
         dr.polygon( [(x-2,y+20), (x+2,y+20), (x+2,r[1]),(x+5,r[1]),(x,r[1]-self.arrowsize),(x-5,r[1]), (x-2,r[1])], fill = self.h_color, outline=self.outline_color )
         hmim =Image.alpha_composite( him, im.rotate( -(360*t[1])/60, Image.BICUBIC ) )
+        # S
         im = Image.new( "RGBA", image.size, (255,255,255,0) )
         dr = ImageDraw.Draw( im )
         dr.line([ ( x, y+30 ), ( x, r[0]+10)], fill = self.s_color, width = 3 )
@@ -482,7 +502,7 @@ class Systeminfo(Switchwindow):
 
 class Ipconfig(Switchwindow):
     """ IP configuration  """
-    def __init__(self,master,name):
+    def __init__(self,master,name,frm=None,state=None):
         Switchwindow.__init__(self,master,name)
         self.drowpanel()
 
@@ -656,6 +676,7 @@ class Ipconfig(Switchwindow):
 
 
 
+
 def _framereplace(x,top_frame,Cframe,event=None):
     global np,clock_frame,tb_frame,panel_frame
     clock_frame.pack_forget()
@@ -666,26 +687,6 @@ def _framereplace(x,top_frame,Cframe,event=None):
 
 def test(x):
     print("test: " + x)
-
-def _unlock(unlock=True,event=None):
-    global clock_frame,tb_frame,panel_frame,lock_frame,lock
-    if unlock:
-        lock_frame.pack_forget()
-        clock_frame.pack(fill=tk.BOTH)
-        _clock()
-    else:
-        tb_frame.pack_forget()
-        panel_frame.pack_forget()
-        clock_frame.pack_forget()
-        lock.clear()
-        lock_frame.pack(fill=tk.BOTH)
-
-def _clock(event=None):
-    global panel_frame,tb_frame,clock_frame
-    panel_frame.pack_forget()
-    tb_frame.pack_forget()
-    clock_frame.pack(fill=tk.BOTH)
-
 
 
 def photo_make( label, size=20, bg="#ffffffff", fg="#00000000" ):
@@ -711,51 +712,142 @@ def btn_img_make(label, fg, fname="btn_gold_black_50.png", size=(50,50)):
     draw = ImageDraw.Draw(img_bg)
     label_size = draw.textsize(label_str,font=font)
     t_place = ( int((img_bg.size[0]-label_size[0])/2), int((img_bg.size[0]-label_size[0])/2) )
-    #t_place=( 0,0 )
     draw.text( t_place, text=label_str, font=font, fill=fg )
 #    img_bg.save("test.png","PNG")
     return ImageTk.PhotoImage(img_bg)
 
-cnf=Conf.Appconfig("rpipanel.ini")
-np=None
-window = tk.Tk()
-scrsize=(window.winfo_screenwidth(),window.winfo_screenheight())
-if scrsize[0]==320:
-    scrmode=0
-    scrsize=(320,240)
-elif scrsize[0]==480:
-    scrmode=1
-    scrsize=(480,320)
-else:
-#   scrmode=1
-#   scrsize=(480,320)
-   scrmode=0
-   scrsize=(320,240)
 
-geometry="{}x{}+0+0".format(scrsize[0],scrsize[1])
-window.overrideredirect(True)
-window.geometry(geometry)
-window.config(bg="black")
+class Rpipanel:
+
+    state={}
+    frames={}
+
+    def __init__(self,scrmode=0,ini="rpipanel.ini"):
+
+        self.cnf=Conf.Appconfig(ini)
+        self.window = tk.Tk()
+        Rpipanel.state["scr_size"] = (self.window.winfo_screenwidth(),self.window.winfo_screenheight())
+
+        if Rpipanel.state["scr_size"][0]==320:
+            self.scrmode=0
+            self.scrsize=(320,240)
+        elif Rpipanel.state["scr_size"][0]==480:
+            self.scrmode=1
+            self.scrsize=(480,320)
+        elif scrmode==0:
+            self.scrmode=0
+            self.scrsize=(320,240)
+        else:
+            self.scrmode=1
+            self.scrsize=(480,320)
+
+        geometry="{}x{}+0+0".format(self.scrsize[0],self.scrsize[1])
+        self.window.overrideredirect(True)
+        self.window.geometry(geometry)
+        self.window.config(bg=self.cnf.dml["global"]["frm_bg"])
 
 
-lock_frame=tk.Frame(window,relief=tk.FLAT,borderwidth=0,bg="black",width=scrsize[0],height=scrsize[1])
-clock_frame=tk.Frame(window,relief=tk.FLAT,borderwidth=0,bg="black",width=scrsize[0],height=scrsize[1])
-tb_frame=tk.Frame(window,relief=tk.FLAT,borderwidth=0,bg="black")
-panel_frame=tk.Frame(window,relief=tk.FLAT,borderwidth=0,bg="black",height=scrsize[1])
+    def run(self):
+        global scrmode,scrsize,cnf
+        scrmode=self.scrmode
+        scrsize=self.scrsize
+        cnf = self.cnf
 
-#tb_frame.pack(fill=tk.X)
-#panel_frame.pack(fill=tk.BOTH)
+        Rpipanel.frames["lock"] = tk.Frame(self.window,relief=tk.FLAT,borderwidth=0,bg=self.cnf.dml["global"]["frm_bg"],width=self.scrsize[0],height=self.scrsize[1])
+        Rpipanel.frames["clock"] = tk.Frame(self.window,relief=tk.FLAT,borderwidth=0,bg=self.cnf.dml["global"]["frm_bg"],width=self.scrsize[0],height=self.scrsize[1])
 
-#buttons = [ ["QUIT",partial(_framereplace,"QUIT",panel_frame,Shutdown)],
-#            ["IP",partial(_framereplace,"IP",panel_frame,Ipconfig)],
-#            ["i",partial(_framereplace,"i",panel_frame,Systeminfo)],
-#            ["LOK",partial(_unlock,False) ] ]
-buttons = [ ["BACK",_clock] ]
+        Rpipanel.frames["tb"] = tk.Frame(self.window,relief=tk.FLAT,borderwidth=0,bg=self.cnf.dml["global"]["frm_bg"])
+        Rpipanel.frames["panel"] = tk.Frame(self.window,relief=tk.FLAT,borderwidth=0,bg=self.cnf.dml["global"]["frm_bg"],height=self.scrsize[1])
 
-tb=Topbar(tb_frame,u"",buttons)
+        #tb_frame.pack(fill=tk.X)
+        #panel_frame.pack(fill=tk.BOTH)
+        #buttons = [ ["QUIT",partial(_framereplace,"QUIT",panel_frame,Shutdown)],
+        #            ["IP",partial(_framereplace,"IP",panel_frame,Ipconfig)],
+        #            ["i",partial(_framereplace,"i",panel_frame,Systeminfo)],
+        #            ["LOK",partial(_unlock,False) ] ]
 
-clock = Clock(clock_frame,"clock")
-lock = Lockpin( lock_frame, "LOC" )
-lock_frame.pack(fill=tk.BOTH)
+        buttons = [ ["BACK",_clock] ]
+        Rpipanel.state["tb"] = Topbar(self.frames["tb"],u"",buttons, self.frames,self.state)
+        Rpipanel.state["clock"] = Clock(self.frames["clock"],"clock", self.frames,self.state)
+        Rpipanel.state["lock"] = Lockpin( self.frames["lock"], "LOC", self.frames,self.state )
+        Rpipanel.state["np"]=None
 
-window.mainloop()
+        Rpipanel.frames[cnf.dml["global"]["start_panel"]].pack(fill=tk.BOTH)
+
+        self.window.mainloop()
+
+
+def _clock(event=None):
+    Rpipanel.frames["panel"].pack_forget()
+    Rpipanel.frames["tb"].pack_forget()
+    Rpipanel.frames["clock"].pack(fill=tk.BOTH)
+
+
+def _unlock(unlock=True,event=None):
+    if unlock:
+        Rpipanel.frames["lock"].pack_forget()
+        Rpipanel.frames["clock"].pack(fill=tk.BOTH)
+        _clock()
+    else:
+        Rpipanel.frames["tb"].pack_forget()
+        Rpipanel.frames["panel"].pack_forget()
+        Rpipanel.frames["clock"].pack_forget()
+        Rpipanel.state["lock"].clear()
+        Rpipanel.frames["lock"].pack(fill=tk.BOTH)
+
+
+
+if __name__=="__main__":
+    p = Rpipanel(0)
+    p.run()
+
+"""
+def main():
+    global cnf,scrsize,scrmode,np,tb,clovk,lock,window,lock_frame,clock_frame,tb_frame,panel_frame
+
+
+    cnf=Conf.Appconfig("rpipanel.ini")
+    np=None
+    window = tk.Tk()
+    scrsize=(window.winfo_screenwidth(),window.winfo_screenheight())
+    if scrsize[0]==320:
+        scrmode=0
+        scrsize=(320,240)
+    elif scrsize[0]==480:
+        scrmode=1
+        scrsize=(480,320)
+    else:
+    #   scrmode=1
+    #   scrsize=(480,320)
+       scrmode=0
+       scrsize=(320,240)
+
+    geometry="{}x{}+0+0".format(scrsize[0],scrsize[1])
+    window.overrideredirect(True)
+    window.geometry(geometry)
+    window.config(bg="black")
+
+
+    lock_frame=tk.Frame(window,relief=tk.FLAT,borderwidth=0,bg="black",width=scrsize[0],height=scrsize[1])
+    clock_frame=tk.Frame(window,relief=tk.FLAT,borderwidth=0,bg="black",width=scrsize[0],height=scrsize[1])
+    tb_frame=tk.Frame(window,relief=tk.FLAT,borderwidth=0,bg="black")
+    panel_frame=tk.Frame(window,relief=tk.FLAT,borderwidth=0,bg="black",height=scrsize[1])
+
+    #tb_frame.pack(fill=tk.X)
+    #panel_frame.pack(fill=tk.BOTH)
+
+    #buttons = [ ["QUIT",partial(_framereplace,"QUIT",panel_frame,Shutdown)],
+    #            ["IP",partial(_framereplace,"IP",panel_frame,Ipconfig)],
+    #            ["i",partial(_framereplace,"i",panel_frame,Systeminfo)],
+    #            ["LOK",partial(_unlock,False) ] ]
+    buttons = [ ["BACK",_clock] ]
+
+    tb=Topbar(tb_frame,u"",buttons)
+
+    clock = Clock(clock_frame,"clock")
+    lock = Lockpin( lock_frame, "LOC" )
+    lock_frame.pack(fill=tk.BOTH)
+
+    window.mainloop()
+"""
+
