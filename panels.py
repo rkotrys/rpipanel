@@ -21,8 +21,7 @@ import conf as panel
 class Shutdown(panel.Switchpanel):
     """ shutdown & reload  """
     def __init__(self,app,master,name):
-        global cnf
-        Switchpanel.__init__(self,app,master,name)
+        panel.Switchpanel.__init__(self,app,master,name)
 
         cnf = self.app.cnf
         fbg = cnf.dml['shutdown']['frm_bg']
@@ -58,5 +57,23 @@ class Shutdown(panel.Switchpanel):
         btn_frame=tk.Frame(self.frm,relief=tk.FLAT,borderwidth=0,bg=fbg,padx=padsize,pady=padsize)
         #btn_frame.pack(fill=tk.X)
         btn_frame.grid(row=1,column=1,padx=5,pady=5)
-        btn=tk.Button(btn_frame,text="CANCEL",command=partial(_framereplace,"QUIT",master,Shutdown),font=font,fg="green",bg=bbg,width=10,pady=bpady)
+        btn=tk.Button(btn_frame,text="CANCEL",command=app.inst.frame_replace,font=font,fg="green",bg=bbg,width=10,pady=bpady)
         btn.pack(fill=tk.X)
+
+
+class Startpage(panel.Switchpanel):
+    """ shutdown & reload  """
+    def __init__(self,app,master,name):
+        self.app=app
+        cnf = self.app.cnf
+        font=(cnf.dml["global"]["font"],16)
+        panel.Switchpanel.__init__(self,app,master,name)
+        self.frame.config(bg="green")
+        self.frm = tk.Frame(self.frame,relief=tk.FLAT,borderwidth=0,bg="gray",padx=2,pady=2)
+        self.frm.place(relx=0.5, rely=0.5, anchor=tk.CENTER)
+        lbl=tk.Label(self.frm,text="Start Page",anchor="w",justify=tk.LEFT,font=font,bg="gray",fg=cnf.dml['topbar']['lbl_fg'])
+        lbl.pack(fill=tk.X)
+        btn=tk.Button(self.frm,text="NEXT",command=self.app.inst.frame_replace,font=font,fg="black",bg="gray",width=10,pady=2)
+        btn.pack(fill=tk.X)
+
+

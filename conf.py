@@ -75,15 +75,22 @@ class Conf(Switchpanel):
 
     def drow(self,buttons=None):
         if buttons == None:
+            # dummy [BACK] button
             self.buttons = [ [ "BACK", partial(print,"[BACK] btn is press") ] ]
         else:
             self.buttons = buttons
+        # create menu bar instance
         self.tb = Topbar(self.app,self.frame,"tb",self.buttons)
 
+        ## Load the panels
         self.panels = {}
+        # list of instaled pannels names is read form ini file
         for item in self.app.cnf.dml["conf"]["pannels"]:
+            # selectet panels instance inicialization
             self.panels[item]=self.app.panels[item](self.app, self.frame, item)
+        # get the first panel
         self.curent_panel=[*self.panels][0]
+        # activate the panel
         self.panels[self.curent_panel].show()
 
 
