@@ -2,7 +2,7 @@
 #
 LU=/home/wlan/projekty/rpipanel
 RPI=/home/pi/py/rpipanel
-CMD=rpipanel.py
+CMD=__main__.py
 #
 HARDWARE=`uname -m`
 #
