@@ -4,7 +4,7 @@
 import tkinter as tk
 from functools import partial
 import Appconfig as Conf
-import conf, panels
+import conf, panels, ipconfig, clock
 
 
 
@@ -16,13 +16,14 @@ class Rpipanel:
     height=0
     scrmode=0
     curent_frame=None
-    cnf=None
+    dml=None
     inst=None
 
     def __init__(self,scrmode=0,ini="rpipanel.ini"):
 
         Rpipanel.inst=self
         Rpipanel.cnf=Conf.Appconfig(ini)
+        Rpipanel.dml=Rpipanel.cnf.dml
         Rpipanel.window = tk.Tk()
         Rpipanel.width = self.window.winfo_screenwidth()
         Rpipanel.height = self.window.winfo_screenheight()
@@ -43,15 +44,15 @@ class Rpipanel:
         geometry="{}x{}+0+0".format(Rpipanel.scrsize[0],Rpipanel.scrsize[1])
         Rpipanel.window.overrideredirect(True)
         Rpipanel.window.geometry(geometry)
-        Rpipanel.window.config(bg=self.cnf.dml["global"]["frm_bg"])
+        Rpipanel.window.config(bg=Rpipanel.dml["global"]["frm_bg"])
 
 
     def run(self):
         """ App starting point """
         # panels dictionary dclaration
-        Rpipanel.panels={"p1":conf.P1,"p2":conf.P2,"p3":conf.P3}
-        # main frame declaration
-        Rpipanel.frm_names={ "Startpage":panels.Startpage, "Conf":conf.Conf, "Shutdown":panels.Shutdown }
+        Rpipanel.panels={"i":panels.Systeminfo,"IP":ipconfig.Ipconfig,"p1":conf.P1,"p2":conf.P2,"p3":conf.P3}
+        # main frame declaration  ## "Systeminfo":panels.Systeminfo,
+        Rpipanel.frm_names={ "Lockpin":panels.Lockpin, "Clock":clock.Clock, "Startpage":panels.Startpage, "Conf":conf.Conf, "Shutdown":panels.Shutdown }
         # create main frames
         for name in Rpipanel.frm_names:
             Rpipanel.frames[name] = Rpipanel.frm_names[name](Rpipanel, Rpipanel.window, name)
@@ -62,17 +63,16 @@ class Rpipanel:
         # Conf frame
         #------------------------------------
         # buttons declaration
-        self.buttons = [ [ "BACK", self.frame_replace ],
-                    ["p1",partial(Rpipanel.frames["Conf"].switch,"p1") ],
-                    ["p2",partial(Rpipanel.frames["Conf"].switch,"p2") ],
-                    ["p3",partial(Rpipanel.frames["Conf"].switch,"p3") ] ]
+        self.buttons = [ [["->"], self.frame_replace] ]
+        for name in Rpipanel.dml["conf"]["pannels"]:
+            self.buttons.append( [name, partial(Rpipanel.frames["Conf"].switch,name)] )
         # drow all
         Rpipanel.frames["Conf"].drow(self.buttons)
         #------------------------------------
 
         # set the start frame
         Rpipanel.curent_frame=Rpipanel.frames[[*Rpipanel.frames][0]]
-        self.frame_replace("Startpage")
+        self.frame_replace(Rpipanel.dml["global"]["start_panel"])
 
         # run the app main loop
         Rpipanel.window.mainloop()
@@ -80,18 +80,15 @@ class Rpipanel:
     def next_frame_name(self,c_name=None):
         if c_name == None:
             c_name =  Rpipanel.curent_frame.name()
-        i=0
-        r=0
-        for name in  Rpipanel.frm_names:
-            if name==c_name:
-                if i+1<len(Rpipanel.frm_names):
-                    r=i+1
-                break
-            i=i+1
+        r = [*Rpipanel.frm_names].index(c_name)
+        if r+1 < len(Rpipanel.frm_names): r=r+1
+        else: r = 0
+
+
         return [*Rpipanel.frm_names][r]
 
 
-    def frame_replace(self,name=None):
+    def frame_replace(self,name=None,event=None):
         if name==None:
             name = self.next_frame_name( Rpipanel.curent_frame.name() )
         Rpipanel.curent_frame.hide()

@@ -21,10 +21,10 @@ class Switchpanel:
     """ virtual class  """
 
     def __init__(self,app,master,name="switchpanel",size=None):
-        dml=app.cnf.dml
+        self.app=app
+        dml=self.app.dml
         self.master=master
         self.window_name=name
-        self.app=app
         self.run=False  # animation start/stop flag
         self.animation=None  # animation functor
         self.animation_step=1000
@@ -74,6 +74,7 @@ class Conf(Switchpanel):
         Switchpanel.__init__(self,app,master,name)
 
     def drow(self,buttons=None):
+        dml=self.app.dml
         if buttons == None:
             # dummy [BACK] button
             self.buttons = [ [ "BACK", partial(print,"[BACK] btn is press") ] ]
@@ -85,7 +86,7 @@ class Conf(Switchpanel):
         ## Load the panels
         self.panels = {}
         # list of instaled pannels names is read form ini file
-        for item in self.app.cnf.dml["conf"]["pannels"]:
+        for item in dml["conf"]["pannels"]:
             # selectet panels instance inicialization
             self.panels[item]=self.app.panels[item](self.app, self.frame, item)
         # get the first panel
@@ -95,7 +96,7 @@ class Conf(Switchpanel):
 
 
     def switch(self,item):
-        for name in self.app.panels:
+        for name in self.panels:
             if name==item:
                 self.panels[name].show()
             else:
@@ -104,35 +105,36 @@ class Conf(Switchpanel):
 class Topbar:
     """ simple top bar with buttons  """
     def __init__(self,app,master,label_text,buttons):
-        cnf=app.cnf
+        dml=app.dml
         scrsize=app.scrsize
         scrmode=app.scrmode
         self.master=master
-        font=( cnf.dml['topbar']['font'], cnf.dml['global']['fonts_size'][scrmode])
-        self.frame = tk.Frame(master,relief=tk.FLAT,borderwidth=1, bg=cnf.dml['topbar']['bar_bg'], height=cnf.dml['topbar']['height'])
+        font=( dml['topbar']['font'], dml['global']['fonts_size'][scrmode])
+        self.frame = tk.Frame(master,relief=tk.FLAT,borderwidth=1, bg=dml['topbar']['bar_bg'], height=dml['topbar']['height'])
         self.frame.pack_propagate(0) # don't shrink
         self.frame.pack(fill=tk.X,side=tk.BOTTOM)
         hostname=hlp.readfile("/etc/hostname")
-        lbl_frame=tk.Frame(self.frame,relief=tk.FLAT,borderwidth=0,bg=cnf.dml['topbar']['bar_bg'], width=len(hostname)*cnf.dml['global']['fonts_size'][scrmode])
+        lbl_frame=tk.Frame(self.frame,relief=tk.FLAT,borderwidth=0,bg=dml['topbar']['bar_bg'], width=len(hostname)*dml['global']['fonts_size'][scrmode])
         lbl_frame.pack_propagate(0) # don't shrink
         lbl_frame.pack(fill=tk.Y, side=tk.LEFT)
-        lbl=tk.Label(lbl_frame,text=hostname,anchor="w",justify=tk.LEFT,font=font,bg=cnf.dml['topbar']['lbl_bg'],fg=cnf.dml['topbar']['lbl_fg'])
+        lbl=tk.Label(lbl_frame,text=hostname,anchor="w",justify=tk.LEFT,font=font,bg=dml['topbar']['lbl_bg'],fg=dml['topbar']['lbl_fg'])
         lbl.pack(side=tk.LEFT,padx=2)
 
-        btn_frame=tk.Frame(self.frame,relief=tk.FLAT,borderwidth=0,bg=cnf.dml['topbar']['bar_bg'])
+        btn_frame=tk.Frame(self.frame,relief=tk.FLAT,borderwidth=0,bg=dml['topbar']['bar_bg'])
         btn_frame.pack(fill=tk.Y, side=tk.RIGHT)
         for b in buttons:
-            btn=tk.Button(btn_frame,text=b[0],command=b[1],relief=tk.RAISED,font=font,fg=cnf.dml['topbar']['btn_fg'],bg=cnf.dml['topbar']['btn_bg'],highlightbackground=cnf.dml['topbar']['lbl_bg'],padx=3,pady=0,bd=1,width=4)
+            btn=tk.Button(btn_frame,text=b[0],command=b[1],relief=tk.RAISED,font=font,fg=dml['topbar']['btn_fg'],bg=dml['topbar']['btn_bg'],highlightbackground=dml['topbar']['lbl_bg'],padx=3,pady=0,bd=1,width=4)
             btn.pack(fill=tk.Y, side=tk.RIGHT)
 
 class P1(Switchpanel):
     """ test p1 """
     def __init__(self,app,master,name):
         Switchpanel.__init__(self,app, master,name)
+        dml=self.app.dml
         frm = tk.Frame(self.frame,relief=tk.FLAT, bg="green",width=100, height=100, )
         frm.pack_propagate(0) # don't shrink
         frm.place(relx=0.5, rely=0.5, anchor=tk.CENTER)
-        lbl=tk.Label(frm,text="P1",justify=tk.LEFT,anchor=tk.W, font=(self.monofont,self.fontsize),width=10 )
+        lbl=tk.Label(frm,text="P1 test",justify=tk.LEFT,anchor=tk.W, font=(self.monofont,self.fontsize),width=20 )
         lbl.pack()
 
 
@@ -143,7 +145,7 @@ class P2(Switchpanel):
         frm = tk.Frame(self.frame,relief=tk.FLAT, bg="orange",width=100, height=100, )
         frm.pack_propagate(0) # don't shrink
         frm.place(relx=0.5, rely=0.5, anchor=tk.CENTER)
-        self.lbl=lbl=tk.Label(frm,text="P2",justify=tk.CENTER,anchor=tk.CENTER, font=(self.monofont,self.fontsize),width=4 )
+        self.lbl=lbl=tk.Label(frm,text="P2 test",justify=tk.CENTER,anchor=tk.CENTER, font=(self.monofont,self.fontsize),width=20 )
         self.lbl.pack(fill=tk.X)
         def animation():
             now = dt.datetime.now().strftime("%H:%M:%S")
@@ -157,7 +159,7 @@ class P3(Switchpanel):
         frm = tk.Frame(self.frame,relief=tk.FLAT, bg="lightblue",width=100, height=100, )
         frm.pack_propagate(0) # don't shrink
         frm.place(relx=0.5, rely=0.5, anchor=tk.CENTER)
-        lbl=tk.Label(frm,text="P3",justify=tk.RIGHT,anchor=tk.E, font=(self.monofont,self.fontsize),width=10 )
+        lbl=tk.Label(frm,text="P3 test",justify=tk.RIGHT,anchor=tk.E, font=(self.monofont,self.fontsize),width=20 )
         lbl.pack()
 
 
