@@ -61,9 +61,9 @@ class Shutdown(panel.Switchpanel):
         self.canvas.create_image( ( int(scrsize[0]*(3.0/4.0)), int(scrsize[1]*(1.0/3.0))), image=self.btn_img['lock'], tag=("btn","btn_lock") )
         self.canvas.tag_bind( "btn_lock", "<Button-1>", partial(self.app.inst.frame_replace, "Lockpin") )
         self.canvas.create_image( ( int(scrsize[0]*(1.0/3.0)), int(scrsize[1]*(2.0/3.0))), image=self.btn_img['reload'], tag=("btn","btn_reload") )
-        self.canvas.tag_bind( "btn_reload", "<Button-1>", partial(hlp.system_exec,"sudo reboot now") )
+        self.canvas.tag_bind( "btn_reload", "<Button-1>", partial(self.system,"sudo reboot now") )
         self.canvas.create_image( (int(scrsize[0]*(2.0/3.0)),int(scrsize[1]*(2.0/3.0))), image=self.btn_img['shutdown'], tag=("btn","btn_shutdown") )
-        self.canvas.tag_bind( "btn_shutdown", "<Button-1>", partial(hlp.system_exec,"sudo shutdown now") )
+        self.canvas.tag_bind( "btn_shutdown", "<Button-1>", partial(self.system,"sudo shutdown now") )
 
     def show(self):
         self.frame.pack(fill=tk.X)
@@ -84,6 +84,9 @@ class Shutdown(panel.Switchpanel):
                 break
         self.app.cnf.save()
         self.drow()
+
+    def system(self,cmd,event=None):
+        hlp.system_exec(cmd)
 
         #self.frm = tk.Frame(self.frame,relief=tk.FLAT,borderwidth=0,bg=fbg,padx=padsize,pady=padsize)
         #self.frm.place(relx=0.5, rely=0.5, anchor=tk.CENTER)
