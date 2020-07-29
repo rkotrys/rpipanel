@@ -68,6 +68,24 @@ class Switchpanel:
     def name(self):
         return self.window_name
 
+    def btn_img_make(self, label, fg, fname="btn_gold_black_50.png", size=(50,50)):
+        dml=self.app.dml
+        scrmode=self.app.scrmode
+        scrsize=self.app.scrsize
+        #
+        img_bg = Image.open( dml["global"]["images"] + fname )
+        font_size = int( size[1] * (28.0/50.0) )
+        if img_bg.size!=size:
+            img_bg = img_bg.resize(size,resample=Image.BICUBIC)
+        font =  ImageFont.truetype( dml["global"]["fonts"]+"segmdl2.ttf", font_size )
+        label_str = chr(label)+u""
+        draw = ImageDraw.Draw(img_bg)
+        label_size = draw.textsize(label_str,font=font)
+        t_place = ( int((img_bg.size[0]-label_size[0])/2), int((img_bg.size[0]-label_size[0])/2) )
+        draw.text( t_place, text=label_str, font=font, fill=fg )
+        return ImageTk.PhotoImage(img_bg)
+
+
 class Conf(Switchpanel):
     """ create pannel with top bar and switchable content  """
     def __init__(self, app, master, name):

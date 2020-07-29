@@ -22,6 +22,7 @@ class Rpipanel:
     def __init__(self,scrmode=0,ini="rpipanel.ini"):
 
         Rpipanel.inst=self
+        Rpipanel.ini=ini
         Rpipanel.cnf=Conf.Appconfig(ini)
         Rpipanel.dml=Rpipanel.cnf.dml
         Rpipanel.window = tk.Tk()
@@ -93,4 +94,8 @@ class Rpipanel:
             name = self.next_frame_name( Rpipanel.curent_frame.name() )
         Rpipanel.curent_frame.hide()
         Rpipanel.curent_frame=Rpipanel.frames[name]
-        Rpipanel.curent_frame.show()
+        if( name=="Lockpin" ):
+
+            Rpipanel.curent_frame.show()
+        else:
+            Rpipanel.curent_frame.show()
