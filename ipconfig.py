@@ -17,6 +17,7 @@ class Ipconfig(panel.Switchpanel):
     """ IP configuration  """
     def __init__(self,app,master,name):
         panel.Switchpanel.__init__(self,app,master,name)
+        self.frames=[]
         self.drowpanel()
 
 
@@ -49,7 +50,9 @@ class Ipconfig(panel.Switchpanel):
         no=0;
         ip={}
         mask={}
-        self.frames=[]
+        if( len(self.frames)>0 ):
+            for f in self.frames:
+                f.destroy()
         for d in self.dev:
             frm = tk.Frame(self.frame, bg=fbg,padx=frm_padx,pady=frm_padx,borderwidth=1, relief=tk.RIDGE, width=self.width)
             frm.pack(fill=tk.X)
@@ -116,6 +119,12 @@ class Ipconfig(panel.Switchpanel):
                 self.frames.append(frm_vlan)
                 btn=tk.Button(frm_vlan,text="Add VLAN Interface",command=partial(self.vlanadd_btn,dev), font=btn_font,bg=bbg,fg=bfg,padx=btn_padx,pady=btn_pady)
                 btn.pack(side=tk.TOP)
+
+    def show(self):
+        self.frame.pack(fill=tk.X)
+        self.run=True
+        self.run_animation()
+        self.drowpanel()
 
 
     def ipset(self, dev, ip, mode="replace"):

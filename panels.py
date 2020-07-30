@@ -88,34 +88,6 @@ class Shutdown(panel.Switchpanel):
     def system(self,cmd,event=None):
         hlp.system_exec(cmd)
 
-        #self.frm = tk.Frame(self.frame,relief=tk.FLAT,borderwidth=0,bg=fbg,padx=padsize,pady=padsize)
-        #self.frm.place(relx=0.5, rely=0.5, anchor=tk.CENTER)
-"""
-        btn_frame=tk.Frame(self.frm,relief=tk.FLAT,borderwidth=0,bg=fbg,padx=padsize,pady=padsize)
-        #btn_frame.pack(fill=tk.X)
-        btn_frame.grid(row=0,column=0,padx=5,pady=5)
-        btn=tk.Button(btn_frame,text="RELOAD",command=partial(hlp.system_exec,"sudo reboot now"),font=font,fg=bfg,bg=bbg,width=10,pady=bpady)
-        btn.pack(fill=tk.X)
-
-        btn_frame=tk.Frame(self.frm,relief=tk.FLAT,borderwidth=0,bg=fbg,padx=padsize,pady=padsize)
-        #btn_frame.pack(fill=tk.X)
-        btn_frame.grid(row=0,column=1,padx=5,pady=5)
-        btn=tk.Button(btn_frame,text="SHUTDOWN",command=partial(hlp.system_exec,"sudo shutdown now"),font=font,fg=bfg,bg=bbg,width=10,pady=bpady)
-        btn.pack(fill=tk.X)
-
-        btn_frame=tk.Frame(self.frm,relief=tk.FLAT,borderwidth=0,bg=fbg,padx=padsize,pady=padsize)
-        #btn_frame.pack(fill=tk.X)
-        btn_frame.grid(row=1,column=0,padx=5,pady=5)
-        btn=tk.Button(btn_frame,text="QUIT",command=quit,font=font,fg=bfg,bg=bbg,width=10,pady=bpady)
-        btn.pack(fill=tk.X)
-
-        btn_frame=tk.Frame(self.frm,relief=tk.FLAT,borderwidth=0,bg=fbg,padx=padsize,pady=padsize)
-        #btn_frame.pack(fill=tk.X)
-        btn_frame.grid(row=1,column=1,padx=5,pady=5)
-        btn=tk.Button(btn_frame,text="CANCEL",command=app.inst.frame_replace,font=font,fg="green",bg=bbg,width=10,pady=bpady)
-        btn.pack(fill=tk.X)
-"""
-
 class Startpage(panel.Switchpanel):
     """ shutdown & reload  """
     def __init__(self,app,master,name):
